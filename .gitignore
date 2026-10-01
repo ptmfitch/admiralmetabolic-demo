@@ -35,13 +35,14 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 
-# Built pkgdown site. The demo change-control docs stay tracked.
-/docs/**
+# pkgdown website output. Authored demo docs under docs/ are tracked.
+/docs/*
 !/docs/pkgdown.yml
+!/docs/setup-macos.md
+!/docs/run-sheet.md
 !/docs/change-control/
-!/docs/change-control/**
 !/docs/audit/
-!/docs/audit/**
+!/docs/demo/
 
 # Local append-only agent audit trail. It can contain conversation ids.
 docs/audit/*.jsonl
@@ -55,6 +56,6 @@ admiraltemplate*.tgz
 # MacOS
 .DS_Store
 
-# Built R documentation, not the demo change-control docs above.
+# Local pkgdown build leftovers outside the tracked demo docs.
 /doc/
 /Meta/
