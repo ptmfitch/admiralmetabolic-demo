@@ -26,6 +26,21 @@ Rscript -e 'renv::restore(prompt = FALSE)'
 make demo
 ```
 
+## Metabolic Insights walkthrough
+
+**DEMO / SYNTHETIC · for enablement only**
+
+The CAD-7 weight-outcomes walkthrough is a local UI under `apps/metabolic-insights`. It does not read clinical data and it does not change the R package.
+
+From the repository root, with Node 20+ and pnpm:
+
+```bash
+pnpm install
+pnpm dev:metabolic
+```
+
+Open the printed local URL. The flow is subject measures, analysis configuration, a short processing step, then the outcomes dashboard. `pnpm test:metabolic` runs the UI tests.
+
 ## What this fork changes
 
 - `renv.lock` pins the packages required to install `{admiralmetabolic}` and run `make test`.

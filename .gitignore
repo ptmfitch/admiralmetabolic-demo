@@ -62,3 +62,9 @@ admiraltemplate*.tgz
 
 # Demo pipeline output (produced by inst/demo/run_pipeline.R)
 inst/demo/output/
+
+# Metabolic Insights UI
+node_modules/
+apps/**/dist/
+.vite/
+.playwright-mcp/

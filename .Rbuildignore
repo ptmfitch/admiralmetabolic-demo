@@ -30,6 +30,12 @@
 ^data-raw$
 ^inst/demo$
 ^inst/demo/output$
+^node_modules$
+^apps$
+^packages$
+^package\.json$
+^pnpm-lock\.yaml$
+^pnpm-workspace\.yaml$
 ^doc$
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$
