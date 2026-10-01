@@ -19,6 +19,13 @@ make test
 
 `make setup` restores the packages pinned in `renv.lock`. `make test` runs the package tests with `testthat`. `make demo` runs `inst/demo/run_pipeline.R` when that file is present. Until the demo derivation is in the checkout, `make demo` prints a short message. When the script is present it writes `inst/demo/output/adwl.csv` from the synthetic data in `inst/demo/data/`.
 
+If `make setup` finishes but `make demo` or `make test` fails with `there is no package called 'admiral'`, the project library is probably empty. `make setup` calls `renv::restore()` through `Rscript --vanilla`, which skips `.Rprofile` and the renv autoloader. Restore can report that the library is already synchronized without installing packages, especially when your R version differs from the one that wrote `renv.lock`. Run restore again with the project profile active, then retry:
+
+```bash
+Rscript -e 'renv::restore(prompt = FALSE)'
+make demo
+```
+
 ## What this fork changes
 
 - `renv.lock` pins the packages required to install `{admiralmetabolic}` and run `make test`.
