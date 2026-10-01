@@ -10,8 +10,10 @@ on:
 
 permissions:
   contents: read
+  # Conversation comments on a pull request need pull-requests write.
+  # issues write alone returns 403 for that endpoint.
   issues: write
-  pull-requests: read
+  pull-requests: write
 
 concurrency:
   group: evidence-pack-${{ github.event.pull_request.number || github.ref }}

@@ -32,27 +32,55 @@ DENY_PROJECTS = {
     "SOP",
     "URL",
 }
-# URS-WL-01 is a requirement id. The hyphen is a boundary, so without the
-# URS- lookbehind the trailing WL-01 fragment is reported as a Jira key.
-KEY_RE = re.compile(
-    r"(?<!URS-)(?<![A-Z0-9])([A-Z][A-Z0-9]{1,9}-\d{1,7})(?!\d)"
-)
+KEY_RE = re.compile(r"(?<![A-Z0-9])([A-Z][A-Z0-9]{1,9}-\d{1,7})(?!\d)")
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
-# GitHub keeps HTML comments in the pull request body. The template's
-# example key lives in one of those comments and is not a cited ticket.
+# GitHub keeps HTML comments in the pull request body. Example keys in the
+# template live in those comments and are not cited tickets.
 HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+# Leading segment of a compound requirement id (URS-WL-01), not a Jira project.
+REQUIREMENT_PREFIXES = {
+    "BR",
+    "DS",
+    "FR",
+    "FS",
+    "IQ",
+    "NFR",
+    "OQ",
+    "PQ",
+    "REQ",
+    "RS",
+    "SOP",
+    "SPEC",
+    "URS",
+}
+
+
+def _requirement_prefix(text: str, start: int) -> str | None:
+    """Segment before the hyphen when a match continues an id such as URS-WL-01."""
+    if start <= 0 or text[start - 1] != "-":
+        return None
+    end = start - 1
+    begin = end
+    while begin > 0 and text[begin - 1].isalnum():
+        begin -= 1
+    segment = text[begin:end]
+    if segment.isalpha() and len(segment) >= 2:
+        return segment
+    return None
 
 
 def extract_keys(*texts: str) -> list[str]:
     found: list[str] = []
     seen: set[str] = set()
     for text in texts:
-        upper = HTML_COMMENT_RE.sub("", text or "")
-        upper = upper.upper()
-        for match in KEY_RE.finditer(upper):
+        visible = HTML_COMMENT_RE.sub(" ", text or "").upper()
+        for match in KEY_RE.finditer(visible):
             key = match.group(1)
             project = key.split("-", 1)[0]
             if project in DENY_PROJECTS or key in seen:
+                continue
+            prefix = _requirement_prefix(visible, match.start(1))
+            if prefix in REQUIREMENT_PREFIXES:
                 continue
             seen.add(key)
             found.append(key)
@@ -287,6 +315,8 @@ def self_test() -> None:
         raise SystemExit("non-ticket text was parsed as a key")
     if extract_keys("Correct the boundary onto URS-WL-01 and URS-EV-01", ""):
         raise SystemExit("requirement ids were parsed as tickets")
+    if extract_keys("Requirements: URS-WL-01, URS-BL-01, URS-TR-01.", "cursor/fix-cad-1") != ["CAD-1"]:
+        raise SystemExit("requirement ids were parsed as tickets")
     if extract_keys("CAD-1 implements URS-WL-01", "") != ["CAD-1"]:
         raise SystemExit("requirement id hid a real ticket")
     placeholder = (
@@ -295,8 +325,14 @@ def self_test() -> None:
     )
     if extract_keys(placeholder, ""):
         raise SystemExit("template example was parsed as a ticket")
+    if extract_keys("<!-- Jira key such as CAD-1, or CR-00100 -->\nCR / ticket ID:", ""):
+        raise SystemExit("an example key inside an HTML comment was parsed")
     if extract_keys("CR / ticket ID: CAD-9 <!-- example CAD-1 -->", "") != ["CAD-9"]:
         raise SystemExit("ticket beside a template comment was dropped")
+    template_path = os.path.join(os.path.dirname(__file__), "..", ".github", "PULL_REQUEST_TEMPLATE.md")
+    template_keys = extract_keys(_read_text(template_path), "")
+    if template_keys:
+        raise SystemExit(f"pull request template yielded keys: {template_keys}")
 
     body = render_comment(
         sha="abc123def456",

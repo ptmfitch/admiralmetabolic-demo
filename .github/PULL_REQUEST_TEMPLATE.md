@@ -4,7 +4,7 @@ This record is evidence for your validated process. It is not an approval, and i
 
 ## Change control
 
-- CR / ticket ID: <!-- Jira key such as CAD-1, or CR- plus digits. A new change needs its own id. -->
+- CR / ticket ID: <!-- Write the Jira key or CR id for this change on this line. A new change needs its own id. -->
 - Risk: <!-- low | medium | high -->
 - GAMP category: <!-- 1 infrastructure | 3 non-configured | 4 configured | 5 custom -->
 - Impacted datasets, variables, and flags: <!-- e.g. ADWL / RESP5FL, RESP10FL -->
