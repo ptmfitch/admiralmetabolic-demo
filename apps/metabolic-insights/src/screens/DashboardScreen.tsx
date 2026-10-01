@@ -264,16 +264,37 @@ function ResponderCard({ analysis, week }: { analysis: Analysis; week: AnalysisW
   );
 }
 
-const BAND_COLOR: Record<string, string> = {
-  normal: "bg-band-low",
-  overweight: "bg-band-mid",
-  obese: "bg-band-high",
-  "lt0.5": "bg-band-low",
-  mid: "bg-band-mid",
-  "ge0.6": "bg-band-high",
-  lt30: "bg-band-low",
-  ge60: "bg-band-high",
+type BandTone = "low" | "mid" | "high";
+
+const BAND_TONE: Record<string, BandTone> = {
+  normal: "low",
+  overweight: "mid",
+  obese: "high",
+  "lt0.5": "low",
+  mid: "mid",
+  "ge0.6": "high",
+  lt30: "low",
+  ge60: "high",
 };
+
+const BAND_COLOR: Record<BandTone, string> = {
+  low: "var(--color-band-low)",
+  mid: "var(--color-band-mid)",
+  high: "var(--color-band-high)",
+};
+
+function BandSwatch({ bandKey }: { bandKey: string }) {
+  const tone = BAND_TONE[bandKey] ?? "low";
+  const patternClass = tone === "mid" ? "band-swatch-mid" : tone === "high" ? "band-swatch-high" : "";
+  return (
+    <span
+      aria-hidden="true"
+      data-band-tone={tone}
+      className={`band-swatch size-2.5 shrink-0 rounded-[3px] ${patternClass}`}
+      style={{ ["--band-swatch-color" as string]: BAND_COLOR[tone] }}
+    />
+  );
+}
 
 function MetabolicRow({ analysis, config }: { analysis: Analysis; config: AnalysisConfig }) {
   return (
@@ -322,7 +343,7 @@ function BandCard({
       <ul className="mt-3 flex flex-col gap-3">
         {rows.map((row) => (
           <li key={row.key} className="flex items-center gap-2 text-xs">
-            <span className={`size-2.5 rounded-[3px] ${BAND_COLOR[row.key] ?? "bg-brand"}`} aria-hidden="true" />
+            <BandSwatch bandKey={row.key} />
             <span className="font-medium">{row.label}</span>
             <span className="ml-auto font-semibold text-ink-soft">{`${row.pct}%`}</span>
           </li>
