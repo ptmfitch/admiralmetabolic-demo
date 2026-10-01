@@ -35,8 +35,12 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 
-# Web Documentation files
+# Web Documentation files (pkgdown output). The demo run-sheet is tracked.
 /docs/*
+!/docs/run-sheet.md
+!/docs/demo/
+/docs/demo/*
+!/docs/demo/canvas-prompt.md
 !/docs/pkgdown.yml
 
 # R Environment Variables
@@ -48,7 +52,6 @@ admiraltemplate*.tgz
 # MacOS
 .DS_Store
 
-# Docs
-docs/
+# Other generated doc trees. Root docs/ exceptions are listed above.
 /doc/
 /Meta/
