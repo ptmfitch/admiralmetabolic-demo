@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import type { AnalysisConfig } from "../lib/analyze";
-import type { AnalysisWeek } from "../lib/metrics";
+import { FLI_BAND_LABEL, type AnalysisWeek } from "../lib/metrics";
 import { Shell } from "../components/Shell";
 
 const OUTPUTS: { key: keyof AnalysisConfig["outputs"]; title: string; detail: string }[] = [
@@ -9,7 +9,11 @@ const OUTPUTS: { key: keyof AnalysisConfig["outputs"]; title: string; detail: st
   { key: "responders", title: "Responder rates ≥15 / ≥20 / ≥25%", detail: "Secondary flags" },
   { key: "bmi", title: "BMI (kg/m²) + WHO class bands", detail: "Underweight → Obese III" },
   { key: "whtr", title: "WHtR bands", detail: "<0.5 / 0.5–<0.6 / ≥0.6" },
-  { key: "fli", title: "FLI (0–100) bands", detail: "<30 / 30–<60 / ≥60" },
+  {
+    key: "fli",
+    title: "FLI (0–100) bands",
+    detail: `${FLI_BAND_LABEL.lt30} / ${FLI_BAND_LABEL.mid} / ${FLI_BAND_LABEL.ge60}`,
+  },
   { key: "homa", title: "HOMA-IR", detail: "Glucose mmol/L · insulin mU/L ÷ 22.5" },
   { key: "tte", title: "Time to ≥X% weight reduction", detail: "Cumulative incidence bars (weeks 0–24)" },
 ];

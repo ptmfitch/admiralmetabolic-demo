@@ -1,6 +1,14 @@
 import { analyze } from "../lib/analyze";
 import { createSeedSubjects } from "../lib/cohort";
-import { bmiKgM2, fattyLiverIndex, homaIr, percentChange, whtr } from "../lib/metrics";
+import {
+  bmiKgM2,
+  fattyLiverIndex,
+  FLI_BAND_LABEL,
+  fliBand,
+  homaIr,
+  percentChange,
+  whtr,
+} from "../lib/metrics";
 
 describe("locked metabolic units", () => {
   it("computes HOMA-IR as glucose mmol/L × insulin mU/L ÷ 22.5", () => {
@@ -16,6 +24,16 @@ describe("locked metabolic units", () => {
     const fli = fattyLiverIndex(28.4, 96, 128, 28);
     expect(fli).toBeGreaterThan(0);
     expect(fli).toBeLessThan(100);
+  });
+
+  it("puts a score of 60 in the upper screening risk band only", () => {
+    expect(fliBand(0)).toBe("lt30");
+    expect(fliBand(29.999)).toBe("lt30");
+    expect(fliBand(30)).toBe("mid");
+    expect(fliBand(59.999)).toBe("mid");
+    expect(fliBand(60)).toBe("ge60");
+    expect(fliBand(100)).toBe("ge60");
+    expect(FLI_BAND_LABEL).toEqual({ lt30: "<30", mid: "30–<60", ge60: "≥60" });
   });
 
   it("treats weight loss as a negative percent change from baseline", () => {

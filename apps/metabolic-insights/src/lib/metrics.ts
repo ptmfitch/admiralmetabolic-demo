@@ -47,6 +47,13 @@ export type BmiClass = "underweight" | "normal" | "overweight" | "obese";
 export type WhtrBand = "lt0.5" | "mid" | "ge0.6";
 export type FliBand = "lt30" | "mid" | "ge60";
 
+/** Screening risk-band labels. Mid band excludes 60. Not a diagnosis. */
+export const FLI_BAND_LABEL: Record<FliBand, string> = {
+  lt30: "<30",
+  mid: "30–<60",
+  ge60: "≥60",
+};
+
 export function bmiKgM2(weightKg: number, heightCm: number): number {
   const meters = heightCm / 100;
   return weightKg / (meters * meters);
@@ -90,6 +97,7 @@ export function fattyLiverIndex(
   return (100 * e) / (1 + e);
 }
 
+/** Screening risk band on an existing FLI score. A score of 60 is the upper band. */
 export function fliBand(fli: number): FliBand {
   if (fli < 30) return "lt30";
   if (fli < 60) return "mid";
