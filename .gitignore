@@ -35,9 +35,14 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 
-# Web Documentation files
+# pkgdown website output. Authored demo docs under docs/ are tracked.
 /docs/*
 !/docs/pkgdown.yml
+!/docs/setup-macos.md
+!/docs/run-sheet.md
+!/docs/change-control/
+!/docs/audit/
+!/docs/demo/
 
 # R Environment Variables
 .Renviron
@@ -48,7 +53,6 @@ admiraltemplate*.tgz
 # MacOS
 .DS_Store
 
-# Docs
-docs/
+# Local pkgdown build leftovers outside the tracked demo docs.
 /doc/
 /Meta/
