@@ -35,9 +35,16 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 
-# Web Documentation files
-/docs/*
+# Built pkgdown site. The demo change-control docs stay tracked.
+/docs/**
 !/docs/pkgdown.yml
+!/docs/change-control/
+!/docs/change-control/**
+!/docs/audit/
+!/docs/audit/**
+
+# Local append-only agent audit trail. It can contain conversation ids.
+docs/audit/*.jsonl
 
 # R Environment Variables
 .Renviron
@@ -48,7 +55,6 @@ admiraltemplate*.tgz
 # MacOS
 .DS_Store
 
-# Docs
-docs/
+# Built R documentation, not the demo change-control docs above.
 /doc/
 /Meta/
