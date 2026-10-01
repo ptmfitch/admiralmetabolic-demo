@@ -1,5 +1,9 @@
 # admiralmetabolic 0.3.0.9000
 
+## New features
+
+- The ADLB vignette and template categorize the existing FLI score into screening risk bands `<30`, `30–<60`, and `≥60` (`AVALCAT1` / `AVALCA1N`, with `BASECAT1` / `BASECA1N` from the baseline record). The bands are not a diagnosis. (CAD-3)
+
 ## Bug fixes
 
 - Changed template save directory. (#129)

@@ -49,6 +49,7 @@ library(stringr)
     -   [Add variables required for derivation](#merge)
     -   [Derive HOMA-IR index](#derive_homa)
     -   [Derive FLI score](#derive_fli)
+    -   [Derive FLI screening risk bands](#fli_bands)
 -   [Remaining ADLB Set-up](#adlb_end)
 -   [Example Script](#example)
 
@@ -197,7 +198,7 @@ In addition to the core ADLB variables, several metabolic parameters and scores 
 *   **Fatty Liver Index (FLI)**: Derived from triglycerides (mg/dL), GGT (U/L), BMI (kg/m2), and waist circumference (cm).
  $$ FLI = \left[\frac{\exp(\lambda)}{1 + \exp(\lambda)}\right] \times 100 $$
 where $$ \lambda = 0.953 \times \ln (\text{triglycerides}) + 0.139 \times BMI + 0.718 \times \ln (GGT) + 0.053 \times \text{waist circumference} – 15.745. $$
-FLI is interpreted as a score between 0 and 100, where higher values indicate a worse condition.
+FLI is a score from 0 to 100. Screening risk bands on that score are derived below. A band is not a clinical diagnosis.
 
 *   **Homeostasis Model Assessment – Insulin Resistance (HOMA-IR)**: Calculated from fasting plasma glucose (mmol/L) and fasting plasma insulin (mIU/L).
  $$ \text{HOMA-IR} = \frac{FPI \times FPG}{22.5}. $$
@@ -267,7 +268,7 @@ dataset_vignette(
 
 ### Derive FLI score {#derive_fli}
 
-To obtain the FLI score parameter, we'll utilize triglycerides, GGT, BMI, and waist circumference. Note that this derivation requires merging data from the ADVS dataset (BMI and Waist Circumference), as demonstrated in the previous section. FLI is provided here as an example; users can derive other metabolic scores like HSI, NAFLD, and others using the same logic and required input variables.
+To obtain the FLI score parameter, we'll utilize triglycerides, GGT, BMI, and waist circumference. Note that this derivation requires merging data from the ADVS dataset (BMI and Waist Circumference), as demonstrated in the previous section. The equation is unchanged. The next section only categorizes this score into screening risk bands.
 
 ```{r}
 # Derive FLI using derive_param_computed
@@ -299,9 +300,71 @@ dataset_vignette(
 )
 ```
 
+### Derive FLI screening risk bands {#fli_bands}
+
+Categorize the existing FLI score with [`derive_vars_cat()`](https://pharmaverse.github.io/admiral/reference/derive_vars_cat.html). The three labels are screening risk bands only. They are not a clinical diagnosis.
+
+The mid band includes 30 and excludes 60, so a score of exactly 60 is only in the upper band.
+
+```{r}
+# Screening risk bands on the existing FLI score. Not a diagnosis.
+fli_avalcat_lookup <- exprs(
+  ~PARAMCD, ~condition,             ~AVALCAT1,     ~AVALCA1N,
+  "FLI",    AVAL < 30,              "<30",         1,
+  "FLI",    AVAL >= 30 & AVAL < 60, "30–<60",      2,
+  "FLI",    AVAL >= 60,             "≥60",         3,
+  "FLI",    is.na(AVAL),            NA_character_, NA_integer_
+)
+
+adlb <- adlb %>%
+  derive_vars_cat(
+    definition = fli_avalcat_lookup,
+    by_vars = exprs(PARAMCD)
+  )
+```
+
+`BASECAT1` and `BASECA1N` keep the baseline screening risk band. The baseline record is the last non-missing result on or before treatment start, the same rule as BMI class in the ADVS template. Other parameters are not assigned an FLI band; their category variables stay missing.
+
+```{r}
+adlb <- adlb %>%
+  restrict_derivation(
+    derivation = derive_var_extreme_flag,
+    args = params(
+      by_vars = exprs(!!!get_admiral_option("subject_keys"), PARAMCD),
+      order = exprs(ADT, AVISITN),
+      new_var = ABLFL,
+      mode = "last"
+    ),
+    filter = (!is.na(AVAL) & ADT <= TRTSDT)
+  )
+
+adlb <- adlb %>%
+  derive_var_base(
+    by_vars = exprs(!!!get_admiral_option("subject_keys"), PARAMCD),
+    source_var = AVALCAT1,
+    new_var = BASECAT1
+  ) %>%
+  derive_var_base(
+    by_vars = exprs(!!!get_admiral_option("subject_keys"), PARAMCD),
+    source_var = AVALCA1N,
+    new_var = BASECA1N
+  )
+```
+
+```{r echo=FALSE}
+dataset_vignette(
+  filter(adlb, PARAMCD == "FLI") %>%
+    arrange(USUBJID, ADY, PARAMN),
+  display_vars = exprs(
+    !!!get_admiral_option("subject_keys"),
+    PARAMCD, AVAL, AVALCAT1, AVALCA1N, ABLFL, BASECAT1, BASECA1N, AVISIT
+  )
+)
+```
+
 ## Remaining ADLB Set-up {#adlb_end}
 
-The `{admiral}` [Creating a BDS Finding ADaM vignette](https://pharmaverse.github.io/admiral/articles/bds_finding.html) describes further steps, including how to calculate baseline and change from baseline variables, add analysis flags (e.g., `ANL01FL`), handle reference ranges, categorizations, and other common ADLB requirements.
+The `{admiral}` [Creating a BDS Finding ADaM vignette](https://pharmaverse.github.io/admiral/articles/bds_finding.html) describes further steps, including change from baseline, analysis flags (e.g., `ANL01FL`), reference ranges, and other common ADLB requirements. FLI screening risk bands, including the baseline band, are derived in the previous section.
 
 # Example Scripts {#example}
 

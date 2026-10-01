@@ -194,6 +194,50 @@ adlb <- adlb %>%
     )
   )
 
+# Derive FLI screening risk bands (AVALCAT1, AVALCA1N) ----
+# Bands on the existing 0-100 score: <30, 30–<60, ≥60.
+# The mid band excludes 60. These are screening risk bands, not a diagnosis.
+# See "Derive FLI screening risk bands" in vignettes/adlb.Rmd.
+fli_avalcat_lookup <- exprs(
+  ~PARAMCD, ~condition,             ~AVALCAT1,     ~AVALCA1N,
+  "FLI",    AVAL < 30,              "<30",         1,
+  "FLI",    AVAL >= 30 & AVAL < 60, "30–<60",      2,
+  "FLI",    AVAL >= 60,             "≥60",         3,
+  "FLI",    is.na(AVAL),            NA_character_, NA_integer_
+)
+
+adlb <- adlb %>%
+  derive_vars_cat(
+    definition = fli_avalcat_lookup,
+    by_vars = exprs(PARAMCD)
+  )
+
+# Baseline flag, then baseline screening risk band (BASECAT1, BASECA1N).
+# Last non-missing result on or before treatment start, as in the ADVS template.
+adlb <- adlb %>%
+  restrict_derivation(
+    derivation = derive_var_extreme_flag,
+    args = params(
+      by_vars = exprs(!!!get_admiral_option("subject_keys"), PARAMCD),
+      order = exprs(ADT, AVISITN),
+      new_var = ABLFL,
+      mode = "last"
+    ),
+    filter = (!is.na(AVAL) & ADT <= TRTSDT)
+  )
+
+adlb <- adlb %>%
+  derive_var_base(
+    by_vars = exprs(!!!get_admiral_option("subject_keys"), PARAMCD),
+    source_var = AVALCAT1,
+    new_var = BASECAT1
+  ) %>%
+  derive_var_base(
+    by_vars = exprs(!!!get_admiral_option("subject_keys"), PARAMCD),
+    source_var = AVALCA1N,
+    new_var = BASECA1N
+  )
+
 # Add Labels and Attributes ----
 # This process is usually based on one's metadata. As such, no specific example
 # will be given. See the "Add Labels and Attributes" vignette section for
