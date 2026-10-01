@@ -32,7 +32,7 @@ The body also has:
 - the test command, pass or fail, and a short log tail
 - the files changed under `inst/demo/**` and `R/**`
 
-Parsing reads a Jira key (project letters, a hyphen, digits) or a `CR-` id from the pull request body and the branch name. HTML comments are skipped, so an example left in the template comment is not linked. A requirement id such as `URS-WL-01` stays a requirement id. Matching is case-insensitive, so a branch named `cursor/fix-cad-1` yields `CAD-1`. If no id is present, the comment says none was found.
+Parsing reads a Jira key (project letters, a hyphen, digits) or a `CR-` id from the pull request body and the branch name. HTML comments are skipped, so an example left in the template comment is not linked. A requirement id such as `URS-WL-01` stays a requirement id. Matching is case-insensitive, so a branch named `cursor/fix-cad-1` yields `CAD-1`. The key has to end at a token boundary, so `kit-8de6` and a UUID fragment such as `ab65-5d22` are left alone. If no id is present, the comment says none was found.
 
 ## What a person still does
 

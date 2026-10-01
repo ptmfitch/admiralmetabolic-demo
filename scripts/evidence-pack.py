@@ -32,7 +32,9 @@ DENY_PROJECTS = {
     "SOP",
     "URL",
 }
-KEY_RE = re.compile(r"(?<![A-Z0-9])([A-Z][A-Z0-9]{1,9}-\d{1,7})(?!\d)")
+# The key must end on a token boundary. Otherwise kit-8de6 yields KIT-8 and a
+# UUID fragment such as ab65-5d22 yields AB65-5.
+KEY_RE = re.compile(r"(?<![A-Z0-9])([A-Z][A-Z0-9]{1,9}-\d{1,7})(?![A-Z0-9])")
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 # GitHub keeps HTML comments in the pull request body. Example keys in the
 # template live in those comments and are not cited tickets.
@@ -319,6 +321,11 @@ def self_test() -> None:
         raise SystemExit("requirement ids were parsed as tickets")
     if extract_keys("CAD-1 implements URS-WL-01", "") != ["CAD-1"]:
         raise SystemExit("requirement id hid a real ticket")
+    if extract_keys("", "cursor/adam-change-control-kit-8de6"):
+        raise SystemExit("branch suffix was parsed as a ticket")
+    agent_url = "bc-a02c392b-ab65-5d22-acb4-48a91a0d8de6"
+    if extract_keys(f"Sample record for CAD-1. {agent_url}", "") != ["CAD-1"]:
+        raise SystemExit("UUID fragments were parsed as tickets")
     placeholder = (
         "CR / ticket ID: <!-- Jira key such as CAD-1, or CR- plus digits. "
         "A new change needs its own id. -->"
