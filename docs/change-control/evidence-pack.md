@@ -8,8 +8,8 @@ Illustrative only. The comment produces evidence for your validated process. It 
 
 `.github/workflows/evidence-pack.yml` runs on each pull request open, reopen, and push.
 
-1. Set up R with `r-lib/actions/setup-r` and `r-lib/actions/setup-r-dependencies`, the same shape as a lean R package check.
-2. Run tests. If a `Makefile` target named `test` exists, the command is `make test`. Until that target exists, the command is `Rscript -e 'testthat::test_local(stop_on_failure = TRUE)'`.
+1. Set up R with `r-lib/actions/setup-r` and `r-lib/actions/setup-r-dependencies`, the same shape as the Tests workflow.
+2. Run `make test`.
 3. Publish one comment. A later push edits that same comment. It does not add a second one.
 
 The workflow uses `GITHUB_TOKEN` only. The head SHA in the comment is the pull request head, not the merge commit.
