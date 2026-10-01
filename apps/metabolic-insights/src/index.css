@@ -55,3 +55,35 @@ input {
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;
 }
+
+.band-swatch {
+  background-color: var(--band-swatch-color);
+}
+
+.band-swatch-mid {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgb(255 255 255 / 0.55) 0,
+    rgb(255 255 255 / 0.55) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.band-swatch-high {
+  background-image:
+    repeating-linear-gradient(
+      135deg,
+      rgb(255 255 255 / 0.55) 0,
+      rgb(255 255 255 / 0.55) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      rgb(255 255 255 / 0.55) 0,
+      rgb(255 255 255 / 0.55) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+}
