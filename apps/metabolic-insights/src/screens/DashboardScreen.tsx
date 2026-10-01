@@ -289,7 +289,7 @@ function MetabolicRow({ analysis, config }: { analysis: Analysis; config: Analys
         <BandCard title="WHtR" subtitle="Waist / height · dimensionless" rows={analysis.whtrBands} />
       ) : null}
       {config.outputs.fli ? (
-        <BandCard title="FLI (0–100)" subtitle="Fatty liver index bands" rows={analysis.fliBands} />
+        <BandCard title="FLI (0–100)" subtitle="Screening risk bands" rows={analysis.fliBands} />
       ) : null}
       {config.outputs.homa ? (
         <section className="rounded-2xl border border-line bg-card p-[18px]">

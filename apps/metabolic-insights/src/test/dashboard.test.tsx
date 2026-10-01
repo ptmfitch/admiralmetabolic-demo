@@ -17,4 +17,17 @@ describe("DashboardScreen", () => {
     expect(screen.getByText("WHO class · Week 12 Active")).toBeInTheDocument();
     expect(screen.queryByText("WHO class · Week 24 Active")).not.toBeInTheDocument();
   });
+
+  it("shows FLI screening risk bands with the locked labels", () => {
+    const subjects = createSeedSubjects();
+    render(<DashboardScreen analysis={analyze(subjects, 24)} config={DEFAULT_CONFIG} />);
+
+    expect(screen.getByText("Screening risk bands")).toBeInTheDocument();
+    expect(screen.getByText("<30")).toBeInTheDocument();
+    expect(screen.getByText("30–<60")).toBeInTheDocument();
+    expect(screen.getByText("≥60")).toBeInTheDocument();
+    expect(screen.queryByText("< 30")).not.toBeInTheDocument();
+    expect(screen.queryByText("≥ 60")).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/MASH|NAFLD|fibrosis/);
+  });
 });
