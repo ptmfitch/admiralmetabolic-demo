@@ -1,83 +1,35 @@
-# admiralmetabolic <img src="man/figures/logo.png" align="right" width="200" style="margin-left:50px;"/>
+# admiralmetabolic demo <img src="man/figures/logo.png" align="right" width="200" style="margin-left:50px;"/>
 
-<!-- badges: start -->
-[![pharmaverse admiralmetabolic Badge](http://pharmaverse.org/shields/admiralmetabolic.svg)](https://pharmaverse.org)
-[![CRAN status](https://www.r-pkg.org/badges/version/admiralmetabolic)](https://CRAN.R-project.org/package=admiralmetabolic)
-[![Test Coverage](https://raw.githubusercontent.com/pharmaverse/admiralmetabolic/badges/main/test-coverage.svg)](https://raw.githubusercontent.com/pharmaverse/admiralmetabolic/badges/main/test-coverage.svg)
-<!-- badges: end -->
+**DEMO / SYNTHETIC · for enablement only**
 
-Metabolism extension package for ADaM in R Asset Library `{admiral}`
+This repository is a demo fork of [pharmaverse/admiralmetabolic](https://github.com/pharmaverse/admiralmetabolic), the metabolism extension of the [{admiral}](https://pharmaverse.org/e2eclinical/adam/) ADaM toolbox for obesity and diabetes analyses. Upstream development stays in the pharmaverse project. This fork is an enablement copy: a documented Mac setup, a locked dependency set, and one command that runs the package tests.
 
-*Explore all the other packages in the [{admiral} ecosystem](https://pharmaverse.org/e2eclinical/adam/) to learn more about ADaM programming in R.*
+The R package is still named `admiralmetabolic`. It remains under the Apache-2.0 license in [LICENSE.md](LICENSE.md). Authors and copyright are unchanged from upstream; they are recorded in `DESCRIPTION`.
 
-## Purpose
+Chronic-disease study teams often work under CSV, 21 CFR Part 11, Annex 11, and GAMP 5 change control, with clinical data on a lakehouse. The checks in this fork produce evidence you can attach to your validated process.
 
-To provide a complementary (to `{admiral}`) toolbox that enables users
-to develop specifics for metabolic clinical trials.
+## Run the tests
 
-## Installation
+From a clean Mac, follow [docs/setup-macos.md](docs/setup-macos.md). After R is installed, the repository root is:
 
-The package is available from CRAN and can be installed with:
-
-```r
-install.packages("admiralmetabolic")
+```bash
+make setup
+make test
 ```
 
-To install the latest development version of the package directly from
-GitHub use the following code:
+`make setup` restores the packages pinned in `renv.lock`. `make test` runs the package tests with `testthat`. `make demo` runs `inst/demo/run_pipeline.R` when that file is present. Until the demo derivation is in the checkout, `make demo` prints a short message. When the script is present it writes `inst/demo/output/adwl.csv` from the synthetic data in `inst/demo/data/`.
 
-```r
-install.packages("pak")
-pak::pkg_install("admiralmetabolic", dependencies = TRUE)
-```
+## What this fork changes
 
-### Dependencies
+- `renv.lock` pins the packages required to install `{admiralmetabolic}` and run `make test`.
+- `Makefile` provides `setup`, `test`, and `demo`.
+- `.github/workflows/test.yml` uses [r-lib/actions](https://github.com/r-lib/actions) to install dependencies and run `make test` on pull requests and on pushes to `main`.
 
-The latest version of the package works with the latest versions of the
-packages stated in `DESCRIPTION`.
+The upstream pharmaverse workflow is not used. It calls shared admiralci workflows, writes a coverage badge on a `badges` branch, and bumps the version with an org automation token. Those are not available on this fork.
 
-If a previous version of the package should be used, it is recommended
-to use latest version of the dependencies at the point of time when the
-previous version of `{admiralmetabolic}` was released.
+## Upstream
 
-## Scope
-
--   Build a toolbox of re-usable functions and utilities to create
-    metabolism-specific ADaM datasets in R in a modular manner.
--   All functions are created based upon the ADaM Implementation Guide
-    and aim to facilitate the programming of ADaM dataset standards.
--   Initially the package will focus on the obesity therapeutic area.
-
-## Expectations
-
-`{admiralmetabolic}` is expected to complement `{admiral}` and provide
-functions to help with the creation of analyses required
-for metabolic trial ADaMs.
-
-## References and Documentation
-
--   Please refer to the [References and
-    Documentation](https://pharmaverse.github.io/admiral/index.html#references-and-documentation)
-
-## R Versions
-
-Here's a summary of our strategy for this package related to R versions:
-
--   R versions for developers and users will follow the same as
-    `{admiral}` core package.
--   For development the `main` branch of `{admiral}` core is used as a
-    dependency. For releasing a new `{admiralmetabolic}` version it must run
-    using the latest released `{admiral}` core version.
-
-## Contact
-
-We use the following for support and communications between user and
-developer community:
-
--   [Slack](https://pharmaverse.slack.com/) - for
-    informal discussions, Q&A and building our user community. If you
-    don't have access, use this
-    [link](https://join.slack.com/t/pharmaverse/shared_invite/zt-yv5atkr4-Np2ytJ6W_QKz_4Olo7Jo9A)
-    to join the pharmaverse Slack workspace
--   [GitHub Issues](https://github.com/pharmaverse/admiralmetabolic/issues) -
-    for direct feedback, enhancement requests or raising bugs
+- Source: <https://github.com/pharmaverse/admiralmetabolic>
+- Documentation: <https://pharmaverse.github.io/admiralmetabolic/>
+- admiral ecosystem: <https://pharmaverse.org/e2eclinical/adam/>
+- CRAN: <https://CRAN.R-project.org/package=admiralmetabolic>
