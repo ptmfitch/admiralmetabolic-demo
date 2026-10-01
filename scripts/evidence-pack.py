@@ -32,15 +32,22 @@ DENY_PROJECTS = {
     "SOP",
     "URL",
 }
-KEY_RE = re.compile(r"(?<![A-Z0-9])([A-Z][A-Z0-9]{1,9}-\d{1,7})(?!\d)")
+# URS-WL-01 is a requirement id. The hyphen is a boundary, so without the
+# URS- lookbehind the trailing WL-01 fragment is reported as a Jira key.
+KEY_RE = re.compile(
+    r"(?<!URS-)(?<![A-Z0-9])([A-Z][A-Z0-9]{1,9}-\d{1,7})(?!\d)"
+)
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+# GitHub keeps HTML comments in the pull request body. The template's
+# example key lives in one of those comments and is not a cited ticket.
+HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
 def extract_keys(*texts: str) -> list[str]:
     found: list[str] = []
     seen: set[str] = set()
     for text in texts:
-        upper = text or ""
+        upper = HTML_COMMENT_RE.sub("", text or "")
         upper = upper.upper()
         for match in KEY_RE.finditer(upper):
             key = match.group(1)
@@ -278,6 +285,18 @@ def self_test() -> None:
         raise SystemExit("CR id was not parsed")
     if extract_keys("setup-r-dependencies@v2 and Part 11", "main"):
         raise SystemExit("non-ticket text was parsed as a key")
+    if extract_keys("Correct the boundary onto URS-WL-01 and URS-EV-01", ""):
+        raise SystemExit("requirement ids were parsed as tickets")
+    if extract_keys("CAD-1 implements URS-WL-01", "") != ["CAD-1"]:
+        raise SystemExit("requirement id hid a real ticket")
+    placeholder = (
+        "CR / ticket ID: <!-- Jira key such as CAD-1, or CR- plus digits. "
+        "A new change needs its own id. -->"
+    )
+    if extract_keys(placeholder, ""):
+        raise SystemExit("template example was parsed as a ticket")
+    if extract_keys("CR / ticket ID: CAD-9 <!-- example CAD-1 -->", "") != ["CAD-9"]:
+        raise SystemExit("ticket beside a template comment was dropped")
 
     body = render_comment(
         sha="abc123def456",
