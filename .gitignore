@@ -49,6 +49,12 @@ admiraltemplate*.tgz
 .DS_Store
 
 # Docs
-docs/
+# Generated site output. docs/demo is tracked demo source.
+docs/*
+!docs/demo/
+!docs/demo/**
+
+# Demo pipeline output (produced by inst/demo/run_pipeline.R)
+inst/demo/output/
 /doc/
 /Meta/
