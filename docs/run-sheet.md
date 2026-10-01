@@ -4,7 +4,7 @@ DEMO / SYNTHETIC · for enablement only.
 
 15 minutes on stage, after a short pre-flight. You are showing a change-control path for a chronic-disease ADaM derivation: a bug report, a cloud agent, a failing boundary test, a small fix, a pull request, an evidence comment, a Bugbot review, a human merge, then the before/after rates and the subjects who moved.
 
-The seeded difference lives in the demo derivation that builds the ADWL extract. The pharmaverse package functions under `R/` stay as published.
+The seeded difference is one comparison in `inst/demo/R/derive_responder_flags.R`: `derive_weight_loss_responder_flags()` sets `RESP5FL` with `PCHG < -5`, so a Week 26 loss of exactly 5.0% is `N`. The written rule is `PCHG <= -5`. `RESP10FL` already uses `PCHG <= -10`. Package functions under `R/` stay as published. Counts and the reference branch are written down in `docs/demo/seeded-defect.md`.
 
 Say these lines when you reach them. They are marked **Say this**.
 
@@ -18,16 +18,17 @@ The comparison step reads two `adwl.csv` files and writes `inst/demo/output/flag
 
 ## Pre-flight (before the room)
 
-Do this on the assembled demo repository, with the pipeline, the seeded derivation, the change-control pull request template, and the evidence-pack action already on `main`.
+Do this on `main` of `ptmfitch/admiralmetabolic-demo`, after the pipeline, hooks, and evidence-pack change are merged.
 
 - [ ] `git remote -v` shows `ptmfitch/admiralmetabolic-demo`. Pull requests in this demo go to that repository, base branch `main`.
 - [ ] Working tree is clean, on `main`, and matches `origin/main`.
-- [ ] Bugbot is on for this repository, including reviews of draft pull requests.
-- [ ] GitHub Actions are enabled (repository Settings → Actions → Allow all actions).
+- [ ] Bugbot is on for this repository, including reviews of draft pull requests. Rules are in `.cursor/BUGBOT.md`.
+- [ ] GitHub Actions are enabled (repository Settings → Actions → Allow all actions), so `.github/workflows/test.yml` and `.github/workflows/evidence-pack.yml` can run.
 - [ ] Slack channel `peter-clinical-adam-demo` exists and is connected to Cursor cloud agents. If you will use Jira instead, open the CAD board and ticket CAD-1: <https://fe-anysphere-demo.atlassian.net/jira/software/projects/CAD/boards/1238>
 - [ ] You can start a Cursor cloud agent against this repository.
 - [ ] `Rscript --version` prints an R version, and `make --version` prints a Make version.
 - [ ] You have a terminal open at the repository root.
+- [ ] Dependencies are restored. If `make test` says they are not installed, run `make setup` once (it restores `renv.lock`), then `make test` again. The seeded suite is green: `tests/testthat/test-demo-adwl.R` does not assert the exact 5.0% row.
 
 Record the seeded commit and save the pre-fix extract. The later comparison needs this file.
 
@@ -39,9 +40,9 @@ make demo
 cp inst/demo/output/adwl.csv /tmp/adwl_before.csv
 ```
 
-`make demo` is the same job as `Rscript inst/demo/run_pipeline.R`. It writes `inst/demo/output/adwl.csv`.
+`make demo` runs `Rscript inst/demo/run_pipeline.R`. That script reads `inst/demo/data/` and writes `inst/demo/output/adwl.csv`. The output directory is gitignored, so keep the copy under `/tmp`.
 
-Glance at the file. `TRT01P` should be `ARM A`, `ARM B`, or `ARM C`. `RESP5FL` and `RESP10FL` are `Y` or `N`.
+Glance at the file. `TRT01P` is `ARM A`, `ARM B`, or `ARM C`. Week 26 weight rows (`PARAMCD` `WEIGHT`, `AVISIT` `Week 26`, `AVISITN` 26) carry `RESP5FL` and `RESP10FL` as `Y` or `N`. Other rows leave those flags blank. Do not open `inst/demo/data/unblinding_key.csv`.
 
 ---
 
@@ -76,22 +77,23 @@ Investigate CAD-1 on ptmfitch/admiralmetabolic-demo. Jira board: https://fe-anys
 
 Week 26 weight responders at exactly 5.0% are flagged RESP5FL = N on the demo ADWL extract. The rule is at least 5% weight loss, so exactly 5.0% must be RESP5FL = Y. RESP10FL is the 10% flag. Leave RESP10FL alone.
 
-Where the difference lives: the demo derivation that sets RESP5FL while building the demo extract (under inst/demo/, and not inst/demo/compare_flags.R). In ADaM terms, percent change from baseline (PCHG) of -5 is exactly 5% weight loss, so the inclusive rule is PCHG <= -5. The same clinical rule written as a loss percent is weight_loss_pct >= 5. The seeded derivation uses a strict comparison, so the boundary is N.
+Where the difference lives: `inst/demo/R/derive_responder_flags.R`, function `derive_weight_loss_responder_flags`. `RESP5FL` is set with `PCHG < -5`. Percent change from baseline (`PCHG`) of -5 is exactly 5% weight loss, so the written rule is `PCHG <= -5`. `RESP10FL` is already `PCHG <= -10`. Leave that line as it is. The background note is `docs/demo/seeded-defect.md`. The sample change record is `docs/change-control/CR-CAD-1.md`.
 
 Do this in order:
 
-1. Find that derivation. If you cannot find a demo derivation that sets RESP5FL under inst/demo/ (other than compare_flags.R), stop and say the demo pipeline is not in the tree. Do not invent a fix anywhere else.
-2. Add a failing testthat test for the exact 5.0% boundary, using synthetic subjects only. A subject at exactly 5.0% Week 26 weight loss must expect RESP5FL = Y. Run it and show that it fails on the current derivation.
-3. Make the smallest change that makes that test pass. Do not change RESP10FL. Do not refactor unrelated code.
-4. Run make test. If Make has no test target, run the new test file with testthat. The boundary test must pass. Do not delete or weaken tests/testthat/test-compare-flags.R.
-5. Open a pull request against ptmfitch/admiralmetabolic-demo, base branch main. Before you create it, confirm the base repository is ptmfitch/admiralmetabolic-demo and not pharmaverse/admiralmetabolic. Never open an issue, pull request, or comment on any pharmaverse repository.
-6. Use the pull request template in this repository and complete it, including the change-control sections if that is the template on the branch. Describe the boundary test and the demo ADWL flag RESP5FL. Leave the pull request open and ready for review. Do not open it as a draft. Do not merge it.
-7. Do not post your own evidence-pack comment. A GitHub Action edits one comment on the pull request, with the text "Updated for <sha>", on each push.
+1. Read `derive_weight_loss_responder_flags`. If `PCHG < -5` is not the `RESP5FL` comparison, stop and say the seed is not the one this demo expects. Do not invent a fix anywhere else.
+2. Add `tests/testthat/test-demo-resp5-boundary.R`. It must expect `RESP5FL == "Y"` when Week 26 `PCHG == -5`. Run `make test` and show that this new test fails while `tests/testthat/test-demo-adwl.R` still passes.
+3. Change only `PCHG < -5` to `PCHG <= -5` in `inst/demo/R/derive_responder_flags.R`. Do not change `RESP10FL`. Do not edit `inst/demo/R/build_adwl.R`, `inst/demo/run_pipeline.R`, or anything under `inst/demo/data/`.
+4. Run `make test` again. The boundary test and the existing demo tests must pass. Do not delete or weaken `tests/testthat/test-compare-flags.R` or `tests/testthat/test-demo-adwl.R`.
+5. Open a pull request against `ptmfitch/admiralmetabolic-demo`, base branch `main`. Before you create it, confirm the base repository is `ptmfitch/admiralmetabolic-demo` and not `pharmaverse/admiralmetabolic`. Never open an issue, pull request, or comment on any pharmaverse repository. Put `CAD-1` in the pull request body so the evidence pack and Bugbot can see the change-request id.
+6. Fill `.github/PULL_REQUEST_TEMPLATE.md` and leave it ready for review, not a draft. Use these change-control lines: CR / ticket ID `CAD-1`; Risk `medium`; GAMP category `5 custom`; Impacted datasets `ADWL / RESP5FL`; Test evidence `make test`. Leave Reviewer sign-off unsigned. Do not merge.
+7. Do not post your own evidence-pack comment. `.github/workflows/evidence-pack.yml` runs `make test` and edits one pull request comment. The heading is `Compliance Evidence Pack`. The next line is `Updated for <sha>`, with the full head SHA.
 
 Hard limits:
 
-- Do not modify anything under R/, inst/templates/, vignettes/, or admiral itself.
-- Do not modify inst/demo/compare_flags.R, docs/run-sheet.md, or docs/demo/canvas-prompt.md.
+- Do not modify anything under `R/`, `inst/templates/`, `vignettes/`, or admiral itself.
+- Do not modify `inst/demo/compare_flags.R`, `docs/run-sheet.md`, `docs/demo/canvas-prompt.md`, `.cursor/**`, `.github/CODEOWNERS`, `.github/PULL_REQUEST_TEMPLATE.md`, or `.github/workflows/evidence-pack.yml`.
+- Do not read or join `inst/demo/data/unblinding_key.csv`.
 - Do not describe this as a defect in pharmaverse admiralmetabolic or in admiral. It is in the demo derivation.
 - Do not describe the change as making a system compliant. If you describe the record, say it produces evidence for a validated process.
 - Do not use company names, customer names, or real subject identifiers. Data in this demo are synthetic.
@@ -105,10 +107,10 @@ While it runs, keep talking. You do not need to read the prompt aloud.
 
 What you should see:
 
-- A new test that expects `RESP5FL = Y` at exactly 5.0% Week 26 weight loss.
-- A small diff in the demo derivation.
-- A pull request whose base repository is `ptmfitch/admiralmetabolic-demo` and whose base branch is `main`.
-- The pull request is ready for review.
+- `tests/testthat/test-demo-resp5-boundary.R`, failing on `main`, then passing after the one-line change.
+- A diff whose only derivation edit is `PCHG < -5` to `PCHG <= -5` in `inst/demo/R/derive_responder_flags.R`.
+- A pull request whose base repository is `ptmfitch/admiralmetabolic-demo` and whose base branch is `main`, with `CAD-1` in the body.
+- The pull request is ready for review. `.github/CODEOWNERS` asks `@ptmfitch` to review `inst/demo/**`.
 
 If the base repository is anything under `pharmaverse`, close it and start again. Do not comment on that repository.
 
@@ -120,9 +122,9 @@ If the pull request is still not open at minute 8, go to [Fallback](#fallback) a
 
 On the pull request:
 
-1. Wait for the evidence-pack comment. It is one comment, edited on each push, and it contains `Updated for` plus the full commit SHA. Read the SHA on the latest commit and match it to that line.
-2. Read the Bugbot review. If it asks for a change inside the demo derivation or the boundary test, let the agent apply that and wait for the evidence comment to show the new SHA. Ignore advice that edits `R/` or the published package.
-3. You merge. The agent does not.
+1. Wait for the evidence-pack comment from `.github/workflows/evidence-pack.yml`. It is one comment, edited on each push. The heading is `Compliance Evidence Pack`, and the next line is `Updated for` plus the full head SHA. Match that SHA to the latest commit. The comment should name `CAD-1`, command `make test`, and the files under `inst/demo/**`.
+2. Read the Bugbot review against `.cursor/BUGBOT.md`. After the inclusive fix, it should not still be filing **Exclusive responder boundary**. If it files **Missing change control reference** or **Missing test evidence**, the body is missing `CAD-1` or the boundary test is missing; let the agent correct that and wait for `Updated for` to show the new SHA. Leave package functions under `R/` untouched.
+3. You merge. The agent does not. Write your name on the template's Reviewer sign-off line when you accept it.
 
 **Say this.** "This produces evidence for your validated process. It doesn't replace it. Your change record still lives where you already keep it, under the Part 11, Annex 11, and GAMP 5 controls you run. The comment on this pull request is the pack you attach to that record. Bugbot reviewed the diff. I am the person who approves the merge."
 
@@ -152,25 +154,21 @@ The script prints how many subjects changed `RESP5FL` and writes:
 - `inst/demo/output/flag_comparison.csv`
 - `inst/demo/output/flag_comparison.json`
 
-Open the JSON. You want three things on screen:
+The script should print `RESP5FL changed for 9 subjects.` Those 9 rows are the Week 26 `WEIGHT` records with `PCHG` of `-5`, `before` `N` and `after` `Y`, three in each masked arm. `N` is 66 subjects per arm.
 
-- `responder_rates` for `RESP5FL`, with `n`, `N`, and `pct` by masked arm, before and after.
-- `responder_rates` for `RESP10FL`, with the same percent before and after.
-- `subjects_resp5fl_changed`: a short list of `USUBJID`, `TRT01P`, `PCHG`, `before`, `after`. Those rows sit on the 5% boundary (`PCHG` of `-5`, a 5.0% loss). `before` is `N` and `after` is `Y`.
+`RESP5FL` rates (n/N):
 
-Use the count the script prints for these two files.
+| Arm | Before (seeded `PCHG < -5`) | After (`PCHG <= -5`) |
+| --- | --- | --- |
+| ARM A | 63/66 (95.5%) | 66/66 (100%) |
+| ARM B | 8/66 (12.1%) | 11/66 (16.7%) |
+| ARM C | 54/66 (81.8%) | 57/66 (86.4%) |
+
+`RESP10FL` does not move: ARM A 54/66 (81.8%), ARM B 2/66 (3.0%), ARM C 14/66 (21.2%). The same figures are in `docs/demo/seeded-defect.md`.
 
 If the changed-subject list is empty, you compared two copies of the same extract. Check that `/tmp/adwl_before.csv` is the pre-flight file and `/tmp/adwl_after.csv` is from the merged fix (or from the fallback branch).
 
-Git refs work when both commits contain `inst/demo/output/adwl.csv`:
-
-```bash
-Rscript inst/demo/compare_flags.R \
-  --before-ref "$(cat /tmp/pre_demo_sha.txt)" \
-  --after-ref HEAD
-```
-
-On stage, use the two CSV paths. The pipeline output is not something you need committed.
+`inst/demo/output/` is gitignored, so `--before-ref` / `--after-ref` will not see `adwl.csv` on these commits. On stage, use the two CSV paths.
 
 **Say this.** "Same shape of evidence when the analysis table lives in your lakehouse. A before extract, an after extract, rates by masked arm, and the subject rows that moved. No treatment names on this screen."
 
@@ -210,7 +208,7 @@ Stop. Do not add a second chart on stage.
 
 ## Fallback
 
-Use this when the live agent does not have a reviewable pull request by minute 8. The branch `demo/reference-fix-5pct-boundary` is the prepared fix for the same boundary.
+Use this when the live agent does not have a reviewable pull request by minute 8. The branch `demo/reference-fix-5pct-boundary` is the prepared fix: it changes `PCHG < -5` to `PCHG <= -5` in `inst/demo/R/derive_responder_flags.R` and adds `tests/testthat/test-demo-resp5-boundary.R`. There is no pull request for that branch.
 
 ```bash
 git fetch origin demo/reference-fix-5pct-boundary

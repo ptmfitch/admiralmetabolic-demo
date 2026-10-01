@@ -1,5 +1,11 @@
-# This a CODEOWNERS file, where you can establish code owners.
-# Code owners are automatically requested for review when someone opens a pull request
-# that modifies code that they own. In this instance, cicdguy will be notified of any
-# changes made the files inside the .github/workflows directory.
-.github/workflows/* @cicdguy
+# DEMO / SYNTHETIC · for enablement only
+# Human review for validated study-derivation paths.
+# Branch protection ("require review from code owners") is what turns this
+# file into a merge check. The file itself does not block a merge.
+
+# Validated derivation paths — the demo ADaM pipeline and package functions.
+/inst/demo/** @ptmfitch
+/R/** @ptmfitch
+
+# Evidence workflow. A later, more specific rule wins over a broader one.
+/.github/workflows/** @ptmfitch

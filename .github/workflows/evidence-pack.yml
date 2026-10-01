@@ -1,0 +1,87 @@
+# DEMO / SYNTHETIC · for enablement only
+# One evidence-pack comment per pull request. Later pushes edit that comment.
+# Uses GITHUB_TOKEN only. Produces evidence for a validated process.
+
+name: Evidence pack
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  # Conversation comments on a pull request need pull-requests write.
+  # issues write alone returns 403 for that endpoint.
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: evidence-pack-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Dependencies come from r-lib/actions, not from a project library restore.
+  RENV_CONFIG_AUTOLOADER_ENABLED: "FALSE"
+
+jobs:
+  evidence-pack:
+    name: Tests and evidence pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - name: Install package dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache: true
+          dependencies: '"hard"'
+          extra-packages: |
+            any::testthat
+            any::diffdf
+          install-pandoc: false
+          install-quarto: false
+
+      - name: Run tests
+        continue-on-error: true
+        run: |
+          mkdir -p "${RUNNER_TEMP}/evidence"
+          command_label="make test"
+          set +e
+          make test > "${RUNNER_TEMP}/evidence/test.log" 2>&1
+          code=$?
+          set -e
+          printf '%s\n' "$command_label" > "${RUNNER_TEMP}/evidence/command"
+          printf '%s\n' "$code" > "${RUNNER_TEMP}/evidence/exit_code"
+          cat "${RUNNER_TEMP}/evidence/test.log"
+          exit "$code"
+
+      - name: Publish evidence-pack comment
+        if: ${{ always() && !cancelled() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          EVIDENCE_DIR: ${{ runner.temp }}/evidence
+        run: python3 scripts/evidence-pack.py publish
+
+      - name: Fail the check when tests fail
+        if: ${{ always() && !cancelled() }}
+        run: |
+          code_file="${RUNNER_TEMP}/evidence/exit_code"
+          if [[ ! -f "$code_file" ]]; then
+            echo "Tests did not produce an exit code."
+            exit 1
+          fi
+          code="$(cat "$code_file")"
+          echo "Test exit code: ${code}"
+          exit "$code"

@@ -35,13 +35,17 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 
-# Web Documentation files (pkgdown output). The demo run-sheet is tracked.
+# pkgdown website output. Authored demo docs under docs/ are tracked.
 /docs/*
-!/docs/run-sheet.md
-!/docs/demo/
-/docs/demo/*
-!/docs/demo/canvas-prompt.md
 !/docs/pkgdown.yml
+!/docs/setup-macos.md
+!/docs/run-sheet.md
+!/docs/change-control/
+!/docs/audit/
+!/docs/demo/
+
+# Local append-only agent audit trail. It can contain conversation ids.
+docs/audit/*.jsonl
 
 # R Environment Variables
 .Renviron
@@ -52,6 +56,9 @@ admiraltemplate*.tgz
 # MacOS
 .DS_Store
 
-# Other generated doc trees. Root docs/ exceptions are listed above.
+# Local pkgdown build leftovers outside the tracked demo docs.
 /doc/
 /Meta/
+
+# Demo pipeline output (produced by inst/demo/run_pipeline.R)
+inst/demo/output/
