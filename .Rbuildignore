@@ -23,6 +23,8 @@
 ^README.Rmd$
 ^\.devcontainer$
 ^data-raw$
+^inst/demo$
+^inst/demo/output$
 ^doc$
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$

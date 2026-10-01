@@ -56,3 +56,6 @@ admiraltemplate*.tgz
 # Local pkgdown build leftovers outside the tracked demo docs.
 /doc/
 /Meta/
+
+# Demo pipeline output (produced by inst/demo/run_pipeline.R)
+inst/demo/output/
