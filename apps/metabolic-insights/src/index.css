@@ -1,0 +1,57 @@
+@import "tailwindcss";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@demo/ui/tokens.css";
+
+/*
+  CAD-7 walkthrough palette from the signed-off frames.
+  Neutrals reuse the shared demo tokens. Brand and band colors are app-specific.
+*/
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --color-canvas: var(--demo-bg);
+  --color-ink: var(--demo-ink);
+  --color-ink-soft: var(--demo-ink-soft);
+  --color-muted: #78766e;
+  --color-line: var(--demo-line);
+  --color-card: #ffffff;
+  --color-card-muted: var(--demo-card);
+  --color-row-alt: #faf9f6;
+  --color-brand: #0f766e;
+  --color-brand-soft: #ecfdf5;
+  --color-brand-wash: rgb(15 118 110 / 0.12);
+  --color-ink-wash: rgb(38 37 30 / 0.12);
+  --color-disclosure: #fff7ed;
+  --color-disclosure-line: #fde6bc;
+  --color-disclosure-ink: #92400e;
+  --color-band-low: #16a34a;
+  --color-band-mid: #d97706;
+  --color-band-high: #e11d48;
+  --color-placebo: #78766e;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+button,
+select,
+input {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
