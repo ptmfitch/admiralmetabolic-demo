@@ -44,6 +44,9 @@ vignettes/*.pdf
 !/docs/audit/
 !/docs/demo/
 
+# Local append-only agent audit trail. It can contain conversation ids.
+docs/audit/*.jsonl
+
 # R Environment Variables
 .Renviron
 admiraltemplate.Rcheck/

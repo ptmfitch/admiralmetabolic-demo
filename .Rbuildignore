@@ -9,6 +9,11 @@
 ^pkgdown$
 ^_pkgdown\.yml$
 ^.github$
+^\.cursor$
+^\.cursor/
+^scripts$
+^scripts/
+^\.cursorignore$
 ^.lintr.R$
 ^docs$
 ^Meta$
