@@ -18,9 +18,14 @@ export function MeasureInput({
   const formatted = formatMeasure(value, digits);
   const [text, setText] = useState(formatted);
 
+  // A partial entry such as "84." parses as 84 and would otherwise be rewritten to "84.0" mid-keystroke.
   useEffect(() => {
-    setText(formatted);
-  }, [formatted]);
+    setText((current) => {
+      const parsed = Number(current);
+      if (current.trim() !== "" && Number.isFinite(parsed) && parsed === value) return current;
+      return formatted;
+    });
+  }, [formatted, value]);
 
   return (
     <input

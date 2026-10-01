@@ -279,7 +279,11 @@ function MetabolicRow({ analysis, config }: { analysis: Analysis; config: Analys
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       {config.outputs.bmi ? (
-        <BandCard title="BMI (kg/m²)" subtitle="WHO class · Week 24 Active" rows={analysis.bmiBands} />
+        <BandCard
+          title="BMI (kg/m²)"
+          subtitle={`WHO class · Week ${config.primaryWeek} Active`}
+          rows={analysis.bmiBands}
+        />
       ) : null}
       {config.outputs.whtr ? (
         <BandCard title="WHtR" subtitle="Waist / height · dimensionless" rows={analysis.whtrBands} />
