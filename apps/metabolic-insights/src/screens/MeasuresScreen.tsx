@@ -116,7 +116,7 @@ export function MeasuresScreen({
                 onClick={() => setFilter(item.id)}
                 className={cn(
                   "rounded-full px-3 py-2 text-xs font-medium",
-                  selected ? "bg-ink text-white" : "border border-line bg-card text-ink-soft",
+                  selected ? "border border-line bg-card text-ink-soft" : "bg-ink text-white",
                 )}
               >
                 {item.label}
