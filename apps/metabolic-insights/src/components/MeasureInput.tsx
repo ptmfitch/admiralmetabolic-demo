@@ -8,12 +8,14 @@ export function MeasureInput({
   label,
   invalid,
   onChange,
+  className,
 }: {
   value: number;
   digits: number;
   label: string;
   invalid: boolean;
   onChange: (value: number) => void;
+  className?: string;
 }) {
   const formatted = formatMeasure(value, digits);
   const [text, setText] = useState(formatted);
@@ -51,6 +53,7 @@ export function MeasureInput({
       className={cn(
         "w-[4.5rem] rounded-md border bg-canvas px-2 py-1.5 text-xs font-medium text-ink",
         invalid ? "border-band-high" : "border-line",
+        className,
       )}
     />
   );

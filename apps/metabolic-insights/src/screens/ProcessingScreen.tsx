@@ -36,9 +36,9 @@ export function ProcessingScreen({
   const remaining = Math.max(3, (steps.length - cursor + 1) * 3);
 
   return (
-    <Shell>
-      <div className="flex min-h-[720px] items-center justify-center px-10 py-16">
-        <section className="w-full max-w-[720px] rounded-[20px] border border-line bg-card p-10">
+    <Shell step={{ current: 3, label: "Processing" }}>
+      <div className="flex flex-1 items-center justify-center px-4 py-8 lg:px-10 lg:py-16">
+        <section className="w-full max-w-[720px] rounded-[20px] border border-line bg-card p-5 lg:p-10">
           <h1 className="text-[22px] font-bold">Running analysis</h1>
           <p className="mt-2 text-[13px] text-ink-soft">
             {`CAD-7 weight outcomes · FAS · Week ${primaryWeek} primary`}
@@ -66,7 +66,13 @@ export function ProcessingScreen({
                         : "size-3 rounded-full bg-brand"
                     }
                   />
-                  <span className={state === "pending" ? "text-sm text-muted" : "text-sm font-medium text-ink"}>
+                  <span
+                    className={
+                      state === "pending"
+                        ? "text-sm whitespace-normal text-muted"
+                        : "text-sm font-medium whitespace-normal text-ink"
+                    }
+                  >
                     {label}
                   </span>
                 </li>
