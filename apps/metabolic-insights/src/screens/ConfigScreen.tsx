@@ -33,7 +33,7 @@ export function ConfigScreen({
 
   return (
     <Shell step={{ current: 2, label: "Setup" }}>
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 py-5 pb-48 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:px-10 lg:py-7 lg:pb-7 xl:flex xl:flex-col">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 py-5 pb-48 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:px-10 lg:py-7 lg:pb-7 xl:flex xl:flex-col xl:items-stretch">
         <div className="min-w-0 lg:col-start-1 lg:row-start-1">
           <h1 className="text-2xl font-bold tracking-tight">Analysis configuration</h1>
           <p className="mt-1.5 text-[13px] text-ink-soft">
