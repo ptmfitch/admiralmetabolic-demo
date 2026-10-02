@@ -16,7 +16,7 @@ derive_weight_loss_responder_flags <- function(dataset) {
       .week26_weight = PARAMCD == "WEIGHT" & AVISITN == 26 & !is.na(PCHG),
       RESP5FL = case_when(
         !.week26_weight ~ NA_character_,
-        PCHG < -5 ~ "Y",
+        PCHG <= -5 ~ "Y",
         TRUE ~ "N"
       ),
       RESP10FL = case_when(
