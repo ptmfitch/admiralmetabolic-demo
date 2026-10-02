@@ -33,15 +33,15 @@ export function ConfigScreen({
 
   return (
     <Shell step={{ current: 2, label: "Setup" }}>
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 py-5 pb-48 lg:px-10 lg:py-7 lg:pb-7">
-        <div>
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 py-5 pb-48 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:px-10 lg:py-7 lg:pb-7 xl:flex xl:flex-col">
+        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
           <h1 className="text-2xl font-bold tracking-tight">Analysis configuration</h1>
           <p className="mt-1.5 text-[13px] text-ink-soft">
             Define population, endpoints, and output datasets before running the ADaM-based weight analysis.
           </p>
         </div>
 
-        <div className="grid items-start gap-5 lg:grid-cols-2">
+        <div className="grid items-start gap-5 lg:col-span-2 lg:grid-cols-2 xl:col-auto">
           <section className="rounded-2xl border border-line bg-card p-6">
             <h2 className="text-base font-semibold">Population &amp; visits</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -119,7 +119,7 @@ export function ConfigScreen({
           </section>
         </div>
 
-        <StickyActions className="flex-col-reverse lg:flex-row lg:items-end lg:justify-between">
+        <StickyActions className="flex-col-reverse lg:col-start-2 lg:row-start-1 lg:flex-row lg:items-end lg:justify-end lg:self-start xl:w-full xl:justify-between">
           <button
             type="button"
             onClick={onBack}

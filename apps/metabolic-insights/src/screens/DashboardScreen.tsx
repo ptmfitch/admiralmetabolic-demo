@@ -35,7 +35,7 @@ export function DashboardScreen({ analysis, config }: { analysis: Analysis; conf
       step={{ current: 4, label: "Outcomes" }}
       nav={
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <nav aria-label="Outcome sections" className="flex max-w-full items-center gap-1 overflow-x-auto">
+          <nav aria-label="Outcome sections" className="flex max-w-full flex-wrap items-center gap-1">
             {TABS.map((item) => {
               const current = tab === item.id;
               return (
