@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { cn } from "@demo/ui/cn";
 import { MeasureInput } from "../components/MeasureInput";
-import { Shell } from "../components/Shell";
+import { Shell, StickyActions } from "../components/Shell";
+import { useCompactLayout } from "../components/useCompactLayout";
 import {
   type EditableField,
   type Subject,
@@ -47,6 +48,7 @@ export function MeasuresScreen({
 }) {
   const [filter, setFilter] = useState<FilterId>("all");
   const [importNote, setImportNote] = useState<string | null>(null);
+  const compact = useCompactLayout();
   const schemaOk = subjects.every(subjectSchemaOk);
 
   const rows = useMemo(() => {
@@ -74,23 +76,23 @@ export function MeasuresScreen({
   }, [filter, subjects]);
 
   return (
-    <Shell>
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-10 py-7">
+    <Shell step={{ current: 1, label: "Inputs" }}>
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 py-5 pb-40 lg:px-10 lg:py-7 lg:pb-7">
         <div className="flex items-start justify-between gap-6">
-          <div>
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold tracking-tight">Subject measures</h1>
             <p className="mt-1.5 text-[13px] text-ink-soft">
               ADVS / ADLB baseline &amp; on-treatment records · editable before analysis
             </p>
           </div>
-          <div className="flex items-center gap-2.5">
+          <StickyActions className="flex-col-reverse lg:flex-row lg:items-center lg:gap-2.5">
             <button
               type="button"
               onClick={() => {
                 onImport();
                 setImportNote("Loaded / schema-checked subject measures (ADVS / ADLB)");
               }}
-              className="rounded-[10px] border border-line bg-card px-4 py-2.5 text-[13px] font-medium text-ink"
+              className="w-full rounded-[10px] border border-line bg-card px-4 py-2.5 text-[13px] font-medium text-ink lg:w-auto"
             >
               Import ADaM
             </button>
@@ -98,11 +100,11 @@ export function MeasuresScreen({
               type="button"
               disabled={!schemaOk}
               onClick={onContinue}
-              className="rounded-[10px] bg-brand px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50"
+              className="w-full rounded-[10px] bg-brand px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50 lg:w-auto"
             >
               Continue to analysis setup
             </button>
-          </div>
+          </StickyActions>
         </div>
 
         <div className="flex flex-wrap gap-2" role="group" aria-label="Subject filters">
@@ -115,7 +117,7 @@ export function MeasuresScreen({
                 aria-pressed={selected}
                 onClick={() => setFilter(item.id)}
                 className={cn(
-                  "rounded-full px-3 py-2 text-xs font-medium",
+                  "shrink-0 rounded-full px-3 py-2 text-xs font-medium whitespace-nowrap",
                   selected ? "border border-line bg-card text-ink-soft" : "bg-ink text-white",
                 )}
               >
@@ -127,47 +129,114 @@ export function MeasuresScreen({
 
         {importNote ? <p className="text-xs font-medium text-brand">{importNote}</p> : null}
 
-        <div className="overflow-hidden rounded-2xl border border-line bg-card">
-          <div className="max-h-[430px] overflow-auto">
-            <table className="w-full border-collapse text-left">
-              <thead className="sticky top-0 bg-card-muted">
-                <tr>
-                  {["USUBJID", "Arm", "Visit", ...COLUMNS.map((column) => column.label)].map((label) => (
-                    <th key={label} scope="col" className="px-3.5 py-3 text-[11px] font-semibold text-muted">
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, index) => (
-                  <tr key={`${row.subject.usubjid}-${row.visit}`} className={index % 2 === 1 ? "bg-row-alt" : "bg-card"}>
-                    <th scope="row" className="px-3.5 py-2 text-xs font-medium text-ink">
-                      {row.subject.usubjid}
-                    </th>
-                    <td className="px-3.5 py-2 text-xs text-ink">{row.subject.arm}</td>
-                    <td className="px-3.5 py-2 text-xs text-ink">{row.visit}</td>
+        {compact ? (
+          <ul className="flex flex-col gap-3" aria-label="Subject measure cards">
+            {rows.map((row) => (
+              <li key={`${row.subject.usubjid}-${row.visit}`}>
+                <article className="rounded-xl border border-line bg-card px-3.5 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold">{row.subject.usubjid}</p>
+                      <p className="text-xs text-muted">
+                        {row.subject.arm} · {row.visit}
+                      </p>
+                    </div>
+                    <span
+                      className={
+                        row.subject.arm === "Active"
+                          ? "shrink-0 rounded-md bg-brand-soft px-2 py-1 text-[11px] font-medium text-brand"
+                          : "shrink-0 rounded-md bg-card-muted px-2 py-1 text-[11px] font-medium text-ink-soft"
+                      }
+                    >
+                      {row.subject.arm}
+                    </span>
+                  </div>
+                  <div className="mt-2.5 grid grid-cols-2 gap-2">
                     {COLUMNS.map((column) => {
                       const value = row.subject[row.key][column.field];
                       const invalid = !fieldInRange(column.field, value);
                       return (
-                        <td key={column.field} className="px-3.5 py-1.5">
+                        <div key={column.field} className="min-w-0 rounded-lg bg-card-muted px-2.5 py-2">
+                          <p className="text-[11px] whitespace-normal text-muted">{column.label}</p>
                           <MeasureInput
                             value={value}
                             digits={column.digits}
                             invalid={invalid}
                             label={`${row.subject.usubjid} ${row.visit} ${column.label}`}
                             onChange={(next) => onChange(row.subject.usubjid, row.key, column.field, next)}
+                            className="mt-1 w-full"
                           />
-                        </td>
+                        </div>
                       );
                     })}
+                  </div>
+                </article>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="max-h-[min(430px,calc(100vh-16rem))] overflow-auto rounded-2xl border border-line bg-card">
+              <table className="w-max min-w-full border-separate border-spacing-0 text-left">
+                <thead className="sticky top-0 z-20 bg-card-muted">
+                  <tr>
+                    <th
+                      scope="col"
+                      className="sticky left-0 z-30 w-[7.5rem] min-w-[7.5rem] bg-card-muted px-3.5 py-3 text-left text-[11px] font-semibold whitespace-nowrap text-muted shadow-[1px_0_0_var(--color-line)]"
+                    >
+                      USUBJID
+                    </th>
+                    {["Arm", "Visit", ...COLUMNS.map((column) => column.label)].map((label) => (
+                      <th
+                        key={label}
+                        scope="col"
+                        className={cn(
+                          "bg-card-muted px-3.5 py-3 text-[11px] font-semibold whitespace-nowrap text-muted",
+                          label === "Arm" || label === "Visit" ? "min-w-[5.5rem]" : "min-w-[8.5rem]",
+                        )}
+                      >
+                        {label}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((row, index) => {
+                    const stripe = index % 2 === 1;
+                    return (
+                      <tr key={`${row.subject.usubjid}-${row.visit}`} className={stripe ? "bg-row-alt" : "bg-card"}>
+                        <th
+                          scope="row"
+                          className={cn(
+                            "sticky left-0 z-10 w-[7.5rem] min-w-[7.5rem] px-3.5 py-2 text-left text-xs font-medium whitespace-nowrap text-ink shadow-[1px_0_0_var(--color-line)]",
+                            stripe ? "bg-row-alt" : "bg-card",
+                          )}
+                        >
+                          {row.subject.usubjid}
+                        </th>
+                        <td className="px-3.5 py-2 text-xs whitespace-nowrap text-ink">{row.subject.arm}</td>
+                        <td className="px-3.5 py-2 text-xs whitespace-nowrap text-ink">{row.visit}</td>
+                        {COLUMNS.map((column) => {
+                          const value = row.subject[row.key][column.field];
+                          const invalid = !fieldInRange(column.field, value);
+                          return (
+                            <td key={column.field} className="min-w-[8.5rem] px-3.5 py-1.5">
+                              <MeasureInput
+                                value={value}
+                                digits={column.digits}
+                                invalid={invalid}
+                                label={`${row.subject.usubjid} ${row.visit} ${column.label}`}
+                                onChange={(next) => onChange(row.subject.usubjid, row.key, column.field, next)}
+                              />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
           </div>
-        </div>
+        )}
 
         {!schemaOk ? (
           <p className="text-xs text-band-high" role="alert">

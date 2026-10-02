@@ -32,9 +32,10 @@ export function DashboardScreen({ analysis, config }: { analysis: Analysis; conf
 
   return (
     <Shell
+      step={{ current: 4, label: "Outcomes" }}
       nav={
-        <>
-          <nav aria-label="Outcome sections" className="flex items-center gap-1">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <nav aria-label="Outcome sections" className="flex max-w-full flex-wrap items-center gap-1">
             {TABS.map((item) => {
               const current = tab === item.id;
               return (
@@ -45,8 +46,8 @@ export function DashboardScreen({ analysis, config }: { analysis: Analysis; conf
                   onClick={() => setTab(item.id)}
                   className={
                     current
-                      ? "rounded-lg bg-card-muted px-3.5 py-2 text-xs font-semibold text-ink"
-                      : "rounded-lg px-3.5 py-2 text-xs font-medium text-ink-soft"
+                      ? "shrink-0 rounded-lg bg-card-muted px-3.5 py-2 text-xs font-semibold whitespace-nowrap text-ink"
+                      : "shrink-0 rounded-lg px-3.5 py-2 text-xs font-medium whitespace-nowrap text-ink-soft"
                   }
                 >
                   {item.label}
@@ -57,15 +58,15 @@ export function DashboardScreen({ analysis, config }: { analysis: Analysis; conf
           <button
             type="button"
             onClick={() => exportFigures(analysis, config.primaryWeek)}
-            className="rounded-lg border border-line bg-card px-3 py-2 text-xs font-medium text-ink"
+            className="shrink-0 rounded-lg border border-line bg-card px-3 py-2 text-xs font-medium whitespace-nowrap text-ink"
           >
             Export figures (demo)
           </button>
-        </>
+        </div>
       }
     >
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-10 py-6">
-        <div className="flex items-end justify-between gap-4">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 lg:px-10 lg:py-6">
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-[22px] font-bold">{`Weight outcomes · Week ${config.primaryWeek}`}</h1>
             <p className="mt-1 text-xs text-ink-soft">
@@ -77,7 +78,7 @@ export function DashboardScreen({ analysis, config }: { analysis: Analysis; conf
           </span>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-3">
           <Kpi
             label="Mean % weight change · Active"
             value={formatPercent(analysis.activeMeanPct)}
@@ -108,7 +109,7 @@ export function DashboardScreen({ analysis, config }: { analysis: Analysis; conf
         </p>
 
         {show("hero") || show("responders") ? (
-          <div className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+          <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,22rem)] xl:grid-cols-[minmax(0,1fr)_420px]">
             {show("hero") ? <WeightChart analysis={analysis} /> : <div />}
             {show("responders") ? <ResponderCard analysis={analysis} week={config.primaryWeek} /> : null}
           </div>
@@ -137,7 +138,7 @@ function Kpi({
   return (
     <article className="rounded-2xl border border-line bg-card p-5">
       <p className="text-xs font-medium text-muted">{label}</p>
-      <div className="mt-2 flex items-end gap-2.5">
+      <div className="mt-2 flex flex-wrap items-end gap-2.5">
         <p className="text-[32px] leading-none font-bold tracking-tight">{value}</p>
         <span
           className={
@@ -183,7 +184,7 @@ function WeightChart({ analysis }: { analysis: Analysis }) {
 
   return (
     <section className="rounded-2xl border border-line bg-card p-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-[15px] font-semibold">Mean percent change in body weight</h2>
           <p className="mt-1 text-[11px] text-muted">% from baseline · weeks 0–24 · LS mean ± SE</p>
@@ -249,7 +250,7 @@ function ResponderCard({ analysis, week }: { analysis: Analysis; week: AnalysisW
           <div key={row.threshold}>
             <div className="flex items-baseline justify-between gap-3">
               <span className="text-xs font-semibold">{`≥${row.threshold}%`}</span>
-              <span className="text-[11px] whitespace-pre text-muted">
+              <span className="text-right text-[11px] whitespace-normal text-muted">
                 {`Active ${row.activePct.toFixed(1)}%  ·  PBO ${row.placeboPct.toFixed(1)}%`}
               </span>
             </div>
@@ -277,7 +278,7 @@ const BAND_COLOR: Record<string, string> = {
 
 function MetabolicRow({ analysis, config }: { analysis: Analysis; config: AnalysisConfig }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
       {config.outputs.bmi ? (
         <BandCard
           title="BMI (kg/m²)"
@@ -322,9 +323,9 @@ function BandCard({
       <ul className="mt-3 flex flex-col gap-3">
         {rows.map((row) => (
           <li key={row.key} className="flex items-center gap-2 text-xs">
-            <span className={`size-2.5 rounded-[3px] ${BAND_COLOR[row.key] ?? "bg-brand"}`} aria-hidden="true" />
-            <span className="font-medium">{row.label}</span>
-            <span className="ml-auto font-semibold text-ink-soft">{`${row.pct}%`}</span>
+            <span className={`size-2.5 shrink-0 rounded-[3px] ${BAND_COLOR[row.key] ?? "bg-brand"}`} aria-hidden="true" />
+            <span className="min-w-0 font-medium whitespace-normal">{row.label}</span>
+            <span className="ml-auto shrink-0 font-semibold text-ink-soft">{`${row.pct}%`}</span>
           </li>
         ))}
       </ul>
@@ -335,8 +336,8 @@ function BandCard({
 function HomaRow({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
     <li className="flex items-center gap-2">
-      <span className={`size-2.5 rounded-[3px] ${tone}`} aria-hidden="true" />
-      <span className="font-medium">{label}</span>
+      <span className={`size-2.5 shrink-0 rounded-[3px] ${tone}`} aria-hidden="true" />
+      <span className="min-w-0 font-medium whitespace-normal">{label}</span>
       <span className="ml-auto font-semibold text-ink-soft">{value}</span>
     </li>
   );
@@ -346,11 +347,11 @@ function TimeToEvent({ analysis }: { analysis: Analysis }) {
   const max = Math.max(10, ...analysis.incidence.flatMap((point) => [point.activePct, point.placeboPct]));
   return (
     <section className="rounded-2xl border border-line bg-card p-5">
-      <div className="flex items-baseline justify-between gap-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-4">
         <h2 className="text-sm font-semibold">Time to ≥15% weight reduction</h2>
         <p className="text-[11px] text-muted">Cumulative incidence · Active vs Placebo · weeks 0–24</p>
       </div>
-      <div className="mt-4 flex h-[140px] items-end gap-3 rounded-[10px] bg-canvas px-4 pt-4 pb-2">
+      <div className="mt-4 flex h-[140px] items-end gap-3 overflow-x-auto rounded-[10px] bg-canvas px-4 pt-4 pb-2">
         {analysis.incidence.map((point) => (
           <div key={point.week} className="flex flex-1 flex-col items-center justify-end gap-1">
             <div className="flex h-[100px] w-full items-end justify-center gap-1">

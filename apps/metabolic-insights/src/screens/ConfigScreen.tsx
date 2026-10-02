@@ -2,7 +2,7 @@ import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import type { AnalysisConfig } from "../lib/analyze";
 import type { AnalysisWeek } from "../lib/metrics";
-import { Shell } from "../components/Shell";
+import { Shell, StickyActions } from "../components/Shell";
 
 const OUTPUTS: { key: keyof AnalysisConfig["outputs"]; title: string; detail: string }[] = [
   { key: "meanChange", title: "Mean % weight change (±SE)", detail: "By arm · primary visual" },
@@ -32,16 +32,16 @@ export function ConfigScreen({
     onChange({ ...config, outputs: { ...config.outputs, [key]: !config.outputs[key] } });
 
   return (
-    <Shell>
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-10 py-7">
-        <div>
+    <Shell step={{ current: 2, label: "Setup" }}>
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 py-5 pb-48 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:px-10 lg:py-7 lg:pb-7 xl:flex xl:flex-col xl:items-stretch">
+        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
           <h1 className="text-2xl font-bold tracking-tight">Analysis configuration</h1>
           <p className="mt-1.5 text-[13px] text-ink-soft">
             Define population, endpoints, and output datasets before running the ADaM-based weight analysis.
           </p>
         </div>
 
-        <div className="grid items-start gap-5 lg:grid-cols-2">
+        <div className="grid items-start gap-5 lg:col-span-2 lg:grid-cols-2 xl:col-auto">
           <section className="rounded-2xl border border-line bg-card p-6">
             <h2 className="text-base font-semibold">Population &amp; visits</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -61,7 +61,7 @@ export function ConfigScreen({
                     aria-label="Primary timepoint"
                     value={config.primaryWeek}
                     onChange={(event) => setWeek(Number(event.target.value) as AnalysisWeek)}
-                    className="w-full appearance-none rounded-[10px] border border-line bg-card px-3.5 py-3 text-sm font-medium text-ink"
+                    className="w-full appearance-none rounded-[10px] border border-line bg-card px-3.5 py-3 pr-8 text-sm font-medium text-ink"
                   >
                     <option value={12}>Week 12</option>
                     <option value={24}>Week 24</option>
@@ -97,9 +97,19 @@ export function ConfigScreen({
                         aria-hidden="true"
                         className={checked ? "size-[18px] rounded bg-brand" : "size-[18px] rounded border border-line bg-card"}
                       />
-                      <span>
-                        <span className="block text-[13px] font-medium text-ink">{output.title}</span>
-                        <span className="block text-[11px] text-muted">{output.detail}</span>
+                      <span className="min-w-0">
+                        <span className="block text-[13px] font-medium whitespace-normal text-ink">{output.title}</span>
+                        <span className="block text-[11px] whitespace-normal text-muted">{output.detail}</span>
+                        {output.key === "fli" ? (
+                          <span className="mt-1 block text-[11px] leading-snug whitespace-normal text-ink-soft">
+                            Risk bands only — not MASH diagnosis
+                          </span>
+                        ) : null}
+                        {output.key === "homa" ? (
+                          <span className="mt-1 block text-[13px] leading-snug font-medium whitespace-normal text-ink">
+                            mmol/L · mU/L ÷ 22.5
+                          </span>
+                        ) : null}
                       </span>
                     </label>
                   </li>
@@ -109,27 +119,27 @@ export function ConfigScreen({
           </section>
         </div>
 
-        <div className="flex items-end justify-between gap-6">
+        <StickyActions className="flex-col-reverse lg:col-start-2 lg:row-start-1 lg:flex-row lg:items-end lg:justify-end lg:self-start xl:w-full xl:justify-between">
           <button
             type="button"
             onClick={onBack}
-            className="rounded-[10px] border border-line bg-card px-[18px] py-3 text-[13px] font-medium text-ink"
+            className="w-full rounded-[10px] border border-line bg-card px-[18px] py-3 text-[13px] font-medium text-ink lg:w-auto"
           >
             Back to measures
           </button>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex w-full flex-col items-stretch gap-2 lg:w-auto lg:items-end">
             <button
               type="button"
               onClick={onRun}
-              className="rounded-xl bg-brand px-[22px] py-3.5 text-sm font-semibold text-white"
+              className="w-full rounded-xl bg-brand px-[22px] py-3.5 text-sm font-semibold whitespace-normal text-white lg:w-auto"
             >
               Run weight outcomes analysis
             </button>
-            <p className="text-[11px] text-muted">
+            <p className="text-[11px] whitespace-normal text-muted lg:text-right">
               {`Creates demo analysis summaries · ~${subjectCount} subjects · Week ${config.primaryWeek} primary`}
             </p>
           </div>
-        </div>
+        </StickyActions>
       </div>
     </Shell>
   );
@@ -151,7 +161,7 @@ function SelectField({
         <select
           aria-label={label}
           defaultValue={value}
-          className="w-full appearance-none rounded-[10px] border border-line bg-card px-3.5 py-3 text-sm font-medium text-ink"
+          className="w-full appearance-none rounded-[10px] border border-line bg-card px-3.5 py-3 pr-8 text-sm font-medium text-ink"
         >
           {children}
         </select>
