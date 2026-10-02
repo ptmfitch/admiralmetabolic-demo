@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type UIEvent } from "react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@demo/ui/cn";
 import { MeasureInput } from "../components/MeasureInput";
 import { Shell } from "../components/Shell";
@@ -21,6 +22,9 @@ const FILTERS: { id: FilterId; label: string }[] = [
 ];
 
 const PREVIEW = ["CAD7-001", "CAD7-014", "CAD7-022", "CAD7-031"];
+
+// The measures pane shows about eight data rows. More than that is below the fold.
+const SCROLL_HINT_MIN_ROWS = 8;
 
 const COLUMNS: { field: EditableField; label: string; digits: number }[] = [
   { field: "weightKg", label: "Weight (kg)", digits: 1 },
@@ -47,6 +51,8 @@ export function MeasuresScreen({
 }) {
   const [filter, setFilter] = useState<FilterId>("all");
   const [importNote, setImportNote] = useState<string | null>(null);
+  const [scrolledToEnd, setScrolledToEnd] = useState(false);
+  const tablePane = useRef<HTMLDivElement>(null);
   const schemaOk = subjects.every(subjectSchemaOk);
 
   const rows = useMemo(() => {
@@ -72,6 +78,14 @@ export function MeasuresScreen({
       return true;
     });
   }, [filter, subjects]);
+
+  const showScrollHint = rows.length > SCROLL_HINT_MIN_ROWS && !scrolledToEnd;
+
+  const onTableScroll = (event: UIEvent<HTMLDivElement>) => {
+    const pane = event.currentTarget;
+    const remaining = pane.scrollHeight - pane.scrollTop - pane.clientHeight;
+    setScrolledToEnd(remaining <= 4);
+  };
 
   return (
     <Shell>
@@ -113,10 +127,16 @@ export function MeasuresScreen({
                 key={item.id}
                 type="button"
                 aria-pressed={selected}
-                onClick={() => setFilter(item.id)}
+                onClick={() => {
+                  setFilter(item.id);
+                  setScrolledToEnd(false);
+                  if (tablePane.current) tablePane.current.scrollTop = 0;
+                }}
                 className={cn(
-                  "rounded-full px-3 py-2 text-xs font-medium",
-                  selected ? "bg-ink text-white" : "border border-line bg-card text-ink-soft",
+                  "rounded-full border px-3 py-2 text-xs",
+                  selected
+                    ? "border-brand bg-brand font-semibold text-white"
+                    : "border-line bg-transparent font-medium text-ink-soft",
                 )}
               >
                 {item.label}
@@ -128,45 +148,65 @@ export function MeasuresScreen({
         {importNote ? <p className="text-xs font-medium text-brand">{importNote}</p> : null}
 
         <div className="overflow-hidden rounded-2xl border border-line bg-card">
-          <div className="max-h-[430px] overflow-auto">
-            <table className="w-full border-collapse text-left">
-              <thead className="sticky top-0 bg-card-muted">
-                <tr>
-                  {["USUBJID", "Arm", "Visit", ...COLUMNS.map((column) => column.label)].map((label) => (
-                    <th key={label} scope="col" className="px-3.5 py-3 text-[11px] font-semibold text-muted">
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, index) => (
-                  <tr key={`${row.subject.usubjid}-${row.visit}`} className={index % 2 === 1 ? "bg-row-alt" : "bg-card"}>
-                    <th scope="row" className="px-3.5 py-2 text-xs font-medium text-ink">
-                      {row.subject.usubjid}
-                    </th>
-                    <td className="px-3.5 py-2 text-xs text-ink">{row.subject.arm}</td>
-                    <td className="px-3.5 py-2 text-xs text-ink">{row.visit}</td>
-                    {COLUMNS.map((column) => {
-                      const value = row.subject[row.key][column.field];
-                      const invalid = !fieldInRange(column.field, value);
-                      return (
-                        <td key={column.field} className="px-3.5 py-1.5">
-                          <MeasureInput
-                            value={value}
-                            digits={column.digits}
-                            invalid={invalid}
-                            label={`${row.subject.usubjid} ${row.visit} ${column.label}`}
-                            onChange={(next) => onChange(row.subject.usubjid, row.key, column.field, next)}
-                          />
-                        </td>
-                      );
-                    })}
+          <div className="relative">
+            <div
+              ref={tablePane}
+              className="max-h-[400px] overflow-y-scroll"
+              tabIndex={0}
+              aria-label="Subject measures"
+              onScroll={onTableScroll}
+            >
+              <table className="w-full border-collapse text-left">
+                <thead className="sticky top-0 bg-card-muted">
+                  <tr>
+                    {["USUBJID", "Arm", "Visit", ...COLUMNS.map((column) => column.label)].map((label) => (
+                      <th key={label} scope="col" className="px-3.5 py-3 text-[11px] font-semibold text-muted">
+                        {label}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((row, index) => (
+                    <tr key={`${row.subject.usubjid}-${row.visit}`} className={index % 2 === 1 ? "bg-row-alt" : "bg-card"}>
+                      <th scope="row" className="px-3.5 py-2 text-xs font-medium text-ink">
+                        {row.subject.usubjid}
+                      </th>
+                      <td className="px-3.5 py-2 text-xs text-ink">{row.subject.arm}</td>
+                      <td className="px-3.5 py-2 text-xs text-ink">{row.visit}</td>
+                      {COLUMNS.map((column) => {
+                        const value = row.subject[row.key][column.field];
+                        const invalid = !fieldInRange(column.field, value);
+                        return (
+                          <td key={column.field} className="px-3.5 py-1.5">
+                            <MeasureInput
+                              value={value}
+                              digits={column.digits}
+                              invalid={invalid}
+                              label={`${row.subject.usubjid} ${row.visit} ${column.label}`}
+                              onChange={(next) => onChange(row.subject.usubjid, row.key, column.field, next)}
+                            />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {showScrollHint ? (
+              <div
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-card to-transparent"
+                aria-hidden="true"
+              />
+            ) : null}
           </div>
+          {showScrollHint ? (
+            <p className="flex items-center justify-center gap-1.5 border-t border-line px-3 py-2 text-[11px] font-medium text-ink-soft">
+              <ChevronDown className="size-3.5" aria-hidden="true" />
+              Scroll to see more subjects
+            </p>
+          ) : null}
         </div>
 
         {!schemaOk ? (
