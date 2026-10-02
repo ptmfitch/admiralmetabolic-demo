@@ -220,15 +220,22 @@ derive_param_glycstt <- function(dataset,
 
   assert_varval_list(set_values_to, required_elements = "PARAMCD")
   assert_param_does_not_exist(dataset, set_values_to$PARAMCD)
+  # exprs(PARAMCD = "GLYCSTT") stores the code as a constant; evaluate calls too.
+  glyc_paramcd <- rlang::eval_tidy(set_values_to$PARAMCD)
   assert_character_scalar(hba1c_code)
   assert_character_scalar(fpg_code)
 
   get_unit_expr <- assert_expr(enexpr(get_unit_expr))
 
+  # Only in-scope rows are validated and used to build GLYCSTT. The returned
+  # dataset still contains every input row.
+  dataset_scope <- dataset %>%
+    admiraldev::filter_if(filter)
+
   hba1c_supported_units <- c("mmol/mol", "%")
   fpg_supported_units <- c("mmol/L", "mg/dL")
 
-  hba1c_units <- dataset %>%
+  hba1c_units <- dataset_scope %>%
     assert_unit(
       param = hba1c_code,
       required_unit = hba1c_supported_units,
@@ -238,7 +245,7 @@ derive_param_glycstt <- function(dataset,
     pull(!!get_unit_expr) %>%
     unique()
 
-  fpg_units <- dataset %>%
+  fpg_units <- dataset_scope %>%
     assert_unit(
       param = fpg_code,
       required_unit = fpg_supported_units,
@@ -333,6 +340,7 @@ derive_param_glycstt <- function(dataset,
         ),
         !!!set_values_to
       ),
+      filter = !!filter,
       keep_nas = TRUE
     ) %>%
     select(-PRED_THRESHOLD)
@@ -342,10 +350,11 @@ derive_param_glycstt <- function(dataset,
   # Diabetic status requires a confirmation, so that there should be
   # two consecutive time points where the results meet the criteria.
 
-  diabetes_confirmed <- dataset %>%
+  diabetes_source <- dataset %>%
     filter(
       PARAMCD %in% c(hba1c_code, fpg_code)
     ) %>%
+    admiraldev::filter_if(filter) %>%
     mutate(
       # Map `diabetic_thresholds` into a variable
       D_THRESHOLD = purrr::map2_dbl(
@@ -361,14 +370,41 @@ derive_param_glycstt <- function(dataset,
         {{ hba1c_code }} ~ "HBA1C",
         {{ fpg_code }} ~ "FPG"
       )
-    ) %>%
+    )
+
+  # pivot_wider keeps only by_vars. Order variables such as a visit date or
+  # LBSEQ are not an id: LBSEQ differs between the two parameters at one visit.
+  # Collapse to one sort key per group so confirmation can still arrange them.
+  order_vars_chr <- setdiff(
+    vars2chr(extract_vars(order)),
+    vars2chr(by_vars)
+  )
+
+  diabetes_confirmed <- diabetes_source %>%
     # Transpose the results and thresholds to a wide structure
     tidyr::pivot_wider(
       id_cols = vars2chr(by_vars),
       names_from = "PARAMCD",
       names_glue = "{PARAMCD}.{.value}",
       values_from = c("AVAL", "D_THRESHOLD")
-    ) %>%
+    )
+
+  if (length(order_vars_chr) > 0L) {
+    order_keys <- diabetes_source %>%
+      group_by(!!!by_vars) %>%
+      summarise(
+        dplyr::across(
+          all_of(order_vars_chr),
+          \(x) if (all(is.na(x))) x[[1]] else min(x, na.rm = TRUE)
+        ),
+        .groups = "drop"
+      )
+
+    diabetes_confirmed <- diabetes_confirmed %>%
+      dplyr::left_join(order_keys, by = unname(vars2chr(by_vars)))
+  }
+
+  diabetes_confirmed <- diabetes_confirmed %>%
     # Identify cases where the criteria is met twice consecutively
     derive_var_joined_exist_flag(
       dataset = .,
@@ -399,19 +435,21 @@ derive_param_glycstt <- function(dataset,
 
   # Adjust initially derived parameter assigning DIABETIC status where criteria have been met ----
 
-  dataset <- dataset %>%
+  dataset <- rlang::inject(
     restrict_derivation(
+      dataset,
       derivation = derive_vars_merged,
       args = params(
         dataset_add = diabetes_confirmed,
         by_vars = by_vars,
         new_vars = exprs(DIABETES_CONFIRMED),
       ),
-      filter = PARAMCD == "GLYCSTT"
-    ) %>%
+      filter = PARAMCD == !!glyc_paramcd
+    )
+  ) %>%
     mutate(
       AVALC = if_else(
-        PARAMCD == "GLYCSTT" & DIABETES_CONFIRMED == "Y",
+        PARAMCD == !!glyc_paramcd & DIABETES_CONFIRMED == "Y",
         "DIABETIC", AVALC, AVALC
       )
     ) %>%
