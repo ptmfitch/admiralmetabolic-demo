@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createSeedSubjects } from "../lib/cohort";
 import { fieldRangeMessage, type Subject } from "../lib/metrics";
 import { MeasuresScreen } from "../screens/MeasuresScreen";
@@ -22,7 +23,7 @@ function renderScreen(subjects: Subject[]) {
 }
 
 describe("MeasuresScreen schema errors", () => {
-  it("ties each invalid input and the blocked Continue button to the counted alert", () => {
+  it("ties each invalid input and the blocked Continue button to the counted alert", async () => {
     const { onContinue } = renderScreen(withOutOfRange(createSeedSubjects()));
 
     const alert = screen.getByRole("alert");
@@ -58,8 +59,9 @@ describe("MeasuresScreen schema errors", () => {
     expect(screen.getByText("Fix 2 invalid fields to continue.")).toBeVisible();
 
     fireEvent.click(continueButton);
-    activateButtonKey(continueButton, "Enter");
-    activateButtonKey(continueButton, " ");
+    continueButton.focus();
+    await userEvent.keyboard("{Enter}");
+    await userEvent.keyboard("{ }");
     expect(onContinue).not.toHaveBeenCalled();
     expect(screen.getByRole("heading", { name: "Subject measures" })).toBeInTheDocument();
   });
@@ -107,16 +109,6 @@ describe("MeasuresScreen schema errors", () => {
     expect(onContinue).toHaveBeenCalledOnce();
   });
 });
-
-// jsdom does not run HTML button activation. Enter clicks on keydown and Space clicks on keyup, unless that key event was canceled.
-function activateButtonKey(button: HTMLElement, key: "Enter" | " ") {
-  button.focus();
-  const code = key === " " ? "Space" : "Enter";
-  const downCanceled = !fireEvent.keyDown(button, { key, code });
-  const upCanceled = !fireEvent.keyUp(button, { key, code });
-  const activationCanceled = key === "Enter" ? downCanceled : upCanceled;
-  if (!activationCanceled) fireEvent.click(button);
-}
 
 function describedText(element: HTMLElement): string {
   const ids = element.getAttribute("aria-describedby")?.split(/\s+/).filter(Boolean) ?? [];
