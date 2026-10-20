@@ -6,9 +6,23 @@ import {
   type EditableField,
   type Subject,
   type VisitName,
+  EDITABLE_FIELDS,
   fieldInRange,
-  subjectSchemaOk,
 } from "../lib/metrics";
+
+const SCHEMA_ALERT_ID = "measures-schema-alert";
+
+function invalidFieldCount(subjects: Subject[]): number {
+  let count = 0;
+  for (const subject of subjects) {
+    for (const visit of ["baseline", "week24"] as const) {
+      for (const field of EDITABLE_FIELDS) {
+        if (!fieldInRange(field, subject[visit][field])) count += 1;
+      }
+    }
+  }
+  return count;
+}
 
 type FilterId = "all" | "active" | "placebo" | "baseline" | "week24";
 
@@ -47,7 +61,8 @@ export function MeasuresScreen({
 }) {
   const [filter, setFilter] = useState<FilterId>("all");
   const [importNote, setImportNote] = useState<string | null>(null);
-  const schemaOk = subjects.every(subjectSchemaOk);
+  const invalidCount = useMemo(() => invalidFieldCount(subjects), [subjects]);
+  const schemaOk = invalidCount === 0;
 
   const rows = useMemo(() => {
     const ordered = [...subjects].sort((a, b) => {
@@ -83,25 +98,39 @@ export function MeasuresScreen({
               ADVS / ADLB baseline &amp; on-treatment records · editable before analysis
             </p>
           </div>
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => {
-                onImport();
-                setImportNote("Loaded / schema-checked subject measures (ADVS / ADLB)");
-              }}
-              className="rounded-[10px] border border-line bg-card px-4 py-2.5 text-[13px] font-medium text-ink"
-            >
-              Import ADaM
-            </button>
-            <button
-              type="button"
-              disabled={!schemaOk}
-              onClick={onContinue}
-              className="rounded-[10px] bg-brand px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50"
-            >
-              Continue to analysis setup
-            </button>
+          <div className="flex flex-col items-end gap-1.5">
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  onImport();
+                  setImportNote("Loaded / schema-checked subject measures (ADVS / ADLB)");
+                }}
+                className="rounded-[10px] border border-line bg-card px-4 py-2.5 text-[13px] font-medium text-ink"
+              >
+                Import ADaM
+              </button>
+              <button
+                type="button"
+                aria-disabled={schemaOk ? undefined : true}
+                aria-describedby={schemaOk ? undefined : SCHEMA_ALERT_ID}
+                onClick={() => {
+                  if (!schemaOk) return;
+                  onContinue();
+                }}
+                className={cn(
+                  "rounded-[10px] bg-brand px-4 py-2.5 text-[13px] font-semibold text-white",
+                  !schemaOk && "cursor-not-allowed opacity-50",
+                )}
+              >
+                Continue to analysis setup
+              </button>
+            </div>
+            {schemaOk ? null : (
+              <p className="text-right text-xs text-ink-soft">
+                Fix {invalidCount} invalid {invalidCount === 1 ? "field" : "fields"} to continue.
+              </p>
+            )}
           </div>
         </div>
 
@@ -156,6 +185,7 @@ export function MeasuresScreen({
                             value={value}
                             digits={column.digits}
                             invalid={invalid}
+                            describedBy={invalid ? SCHEMA_ALERT_ID : undefined}
                             label={`${row.subject.usubjid} ${row.visit} ${column.label}`}
                             onChange={(next) => onChange(row.subject.usubjid, row.key, column.field, next)}
                           />
@@ -170,8 +200,9 @@ export function MeasuresScreen({
         </div>
 
         {!schemaOk ? (
-          <p className="text-xs text-band-high" role="alert">
-            One or more measures are outside the expected unit range. Correct them before analysis.
+          <p id={SCHEMA_ALERT_ID} className="text-xs text-band-high" role="alert">
+            {invalidCount} {invalidCount === 1 ? "field is" : "fields are"} outside the expected unit range.
+            Correct them before analysis.
           </p>
         ) : null}
         <p className="text-xs text-muted">

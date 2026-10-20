@@ -34,4 +34,41 @@ describe("MeasureInput", () => {
     fireEvent.blur(input);
     expect(input).toHaveValue("8.0");
   });
+
+  it("describes an invalid value with text, not only a red border", () => {
+    render(
+      <>
+        <MeasureInput
+          value={9}
+          digits={1}
+          label="Weight (kg)"
+          invalid
+          describedBy="schema-summary"
+          onChange={() => {}}
+        />
+        <p id="schema-summary">1 field is outside the expected unit range.</p>
+      </>,
+    );
+
+    const input = screen.getByRole("textbox", { name: "Weight (kg)" });
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByText("!")).toBeVisible();
+    expect(screen.getByText("Out of range")).toBeVisible();
+
+    const described = describedText(input);
+    expect(described).toMatch(/Out of range/);
+    expect(described).toMatch(/1 field is outside the expected unit range/);
+  });
 });
+
+function describedText(element: HTMLElement): string {
+  const ids = element.getAttribute("aria-describedby")?.split(/\s+/).filter(Boolean) ?? [];
+  expect(ids.length).toBeGreaterThan(0);
+  return ids
+    .map((id) => {
+      const node = document.getElementById(id);
+      expect(node).not.toBeNull();
+      return node?.textContent ?? "";
+    })
+    .join(" ");
+}
