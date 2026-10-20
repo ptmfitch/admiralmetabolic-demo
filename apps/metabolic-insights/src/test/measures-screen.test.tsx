@@ -58,7 +58,10 @@ describe("MeasuresScreen schema errors", () => {
     expect(screen.getByText("Fix 2 invalid fields to continue.")).toBeVisible();
 
     fireEvent.click(continueButton);
+    activateButtonKey(continueButton, "Enter");
+    activateButtonKey(continueButton, " ");
     expect(onContinue).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "Subject measures" })).toBeInTheDocument();
   });
 
   it("uses singular wording when one field is invalid", () => {
@@ -104,6 +107,16 @@ describe("MeasuresScreen schema errors", () => {
     expect(onContinue).toHaveBeenCalledOnce();
   });
 });
+
+// jsdom does not run HTML button activation. Enter clicks on keydown and Space clicks on keyup, unless that key event was canceled.
+function activateButtonKey(button: HTMLElement, key: "Enter" | " ") {
+  button.focus();
+  const code = key === " " ? "Space" : "Enter";
+  const downCanceled = !fireEvent.keyDown(button, { key, code });
+  const upCanceled = !fireEvent.keyUp(button, { key, code });
+  const activationCanceled = key === "Enter" ? downCanceled : upCanceled;
+  if (!activationCanceled) fireEvent.click(button);
+}
 
 function describedText(element: HTMLElement): string {
   const ids = element.getAttribute("aria-describedby")?.split(/\s+/).filter(Boolean) ?? [];
