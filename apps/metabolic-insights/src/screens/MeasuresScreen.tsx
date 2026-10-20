@@ -121,15 +121,14 @@ export function MeasuresScreen({
 
   return (
     <Shell>
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-10 py-7">
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Subject measures</h1>
-            <p className="mt-1.5 text-[13px] text-ink-soft">
-              ADVS / ADLB baseline &amp; on-treatment records · editable before analysis
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-1.5">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-10 py-7 md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+        <div className="md:col-start-1 md:row-start-1">
+          <h1 className="text-2xl font-bold tracking-tight">Subject measures</h1>
+          <p className="mt-1.5 text-[13px] text-ink-soft">
+            ADVS / ADLB baseline &amp; on-treatment records · editable before analysis
+          </p>
+        </div>
+        <div className="order-last flex flex-col items-end gap-1.5 md:order-none md:col-start-2 md:row-start-1 md:justify-self-end">
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
@@ -162,9 +161,9 @@ export function MeasuresScreen({
                 ? "Ready to continue to Analysis Setup"
                 : `Fix ${invalidCount} invalid ${invalidCount === 1 ? "field" : "fields"} to continue.`}
             </p>
-          </div>
         </div>
 
+        <div className="flex flex-col gap-6 md:col-span-2 md:row-start-2">
         <div className="flex flex-wrap gap-2" role="group" aria-label="Subject filters">
           {FILTERS.map((item) => {
             const selected = filter === item.id;
@@ -186,8 +185,38 @@ export function MeasuresScreen({
         </div>
 
         {importNote ? <p className="text-xs font-medium text-brand">{importNote}</p> : null}
+        </div>
 
-        <div className="overflow-hidden rounded-2xl border border-line bg-card">
+        {!schemaOk ? (
+          <p
+            id={SCHEMA_ALERT_ID}
+            className="order-last text-xs text-band-high md:order-none md:col-span-2 md:row-start-3"
+            role="alert"
+          >
+            {alertCopy.summary}{" "}
+            {firstInvalidId ? (
+              <a
+                href={`#${firstInvalidId}`}
+                className="underline"
+                onClick={(event) => {
+                  const input = document.getElementById(firstInvalidId);
+                  if (!input) return;
+                  event.preventDefault();
+                  input.focus();
+                  if (typeof input.scrollIntoView === "function") {
+                    input.scrollIntoView({ block: "nearest", inline: "nearest" });
+                  }
+                }}
+              >
+                {alertCopy.action}
+              </a>
+            ) : (
+              alertCopy.action
+            )}
+          </p>
+        ) : null}
+
+        <div className={cn("overflow-hidden rounded-2xl border border-line bg-card md:col-span-2", schemaOk ? "md:row-start-3" : "md:row-start-4")}>
           <div className="max-h-[430px] overflow-auto">
             <table className="w-full border-collapse text-left">
               <thead className="sticky top-0 bg-card-muted">
@@ -232,31 +261,7 @@ export function MeasuresScreen({
           </div>
         </div>
 
-        {!schemaOk ? (
-          <p id={SCHEMA_ALERT_ID} className="text-xs text-band-high" role="alert">
-            {alertCopy.summary}{" "}
-            {firstInvalidId ? (
-              <a
-                href={`#${firstInvalidId}`}
-                className="underline"
-                onClick={(event) => {
-                  const input = document.getElementById(firstInvalidId);
-                  if (!input) return;
-                  event.preventDefault();
-                  input.focus();
-                  if (typeof input.scrollIntoView === "function") {
-                    input.scrollIntoView({ block: "nearest", inline: "nearest" });
-                  }
-                }}
-              >
-                {alertCopy.action}
-              </a>
-            ) : (
-              alertCopy.action
-            )}
-          </p>
-        ) : null}
-        <p className="text-xs text-muted">
+        <p className={cn("order-last text-xs text-muted md:order-none md:col-span-2", schemaOk ? "md:row-start-4" : "md:row-start-5")}>
           Editable for walkthrough only — changes are not audited / Part 11 controlled.
         </p>
       </div>
