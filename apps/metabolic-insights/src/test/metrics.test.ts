@@ -1,6 +1,30 @@
 import { analyze } from "../lib/analyze";
 import { createSeedSubjects } from "../lib/cohort";
-import { bmiKgM2, fattyLiverIndex, homaIr, percentChange, whtr } from "../lib/metrics";
+import {
+  bmiKgM2,
+  EDITABLE_FIELDS,
+  fattyLiverIndex,
+  fieldInRange,
+  fieldRangeMessage,
+  fieldRule,
+  homaIr,
+  percentChange,
+  whtr,
+} from "../lib/metrics";
+
+describe("field range messages", () => {
+  it("matches the rule definition for every editable field", () => {
+    for (const field of EDITABLE_FIELDS) {
+      const rule = fieldRule(field);
+      expect(fieldRangeMessage(field)).toBe(`${rule.label} must be ${rule.min}–${rule.max} ${rule.unit}`);
+      expect(fieldInRange(field, rule.min)).toBe(true);
+      expect(fieldInRange(field, rule.max)).toBe(true);
+      expect(fieldInRange(field, rule.min - 1)).toBe(false);
+      expect(fieldInRange(field, rule.max + 1)).toBe(false);
+    }
+    expect(fieldRangeMessage("waistCm")).toBe("Waist circumference must be 50–200 cm");
+  });
+});
 
 describe("locked metabolic units", () => {
   it("computes HOMA-IR as glucose mmol/L × insulin mU/L ÷ 22.5", () => {

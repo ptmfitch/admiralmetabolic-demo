@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createSeedSubjects } from "../lib/cohort";
-import type { Subject } from "../lib/metrics";
+import { fieldRangeMessage, type Subject } from "../lib/metrics";
 import { MeasuresScreen } from "../screens/MeasuresScreen";
 
 function withOutOfRange(subjects: Subject[]): Subject[] {
@@ -26,22 +26,30 @@ describe("MeasuresScreen schema errors", () => {
     const { onContinue } = renderScreen(withOutOfRange(createSeedSubjects()));
 
     const alert = screen.getByRole("alert");
-    expect(alert).toHaveTextContent("2 fields are outside the expected unit range");
+    expect(alert).toHaveTextContent("2 fields are outside the expected unit range. Correct them before analysis.");
 
-    for (const name of ["CAD7-001 Baseline Weight (kg)", "CAD7-001 Baseline Waist (cm)"]) {
-      const input = screen.getByRole("textbox", { name });
+    const weight = screen.getByRole("textbox", { name: "CAD7-001 Baseline Weight (kg)" });
+    const waist = screen.getByRole("textbox", { name: "CAD7-001 Baseline Waist (cm)" });
+    for (const input of [weight, waist]) {
       expect(input).toHaveAttribute("aria-invalid", "true");
+      expect(input.className).toContain("border-2");
       const described = describedText(input);
-      expect(described).toMatch(/Out of range/);
+      expect(described).toContain(fieldRangeMessage(input === weight ? "weightKg" : "waistCm"));
       expect(described).toMatch(/2 fields are outside the expected unit range/);
       expect(input.getAttribute("aria-describedby")).toContain(alert.id);
     }
+    expect(screen.getByText(fieldRangeMessage("weightKg"))).toBeVisible();
+    expect(screen.getByText(fieldRangeMessage("waistCm"))).toBeVisible();
+
+    const jump = screen.getByRole("link", { name: "Correct them before analysis." });
+    expect(jump).toHaveAttribute("href", `#${weight.id}`);
+    fireEvent.click(jump);
+    expect(weight).toHaveFocus();
 
     expect(screen.getByRole("textbox", { name: "CAD7-001 Baseline Height (cm)" })).toHaveAttribute(
       "aria-invalid",
       "false",
     );
-    expect(screen.getAllByText("Out of range")).toHaveLength(2);
     expect(screen.getAllByText("!")).toHaveLength(2);
 
     const continueButton = screen.getByRole("button", { name: "Continue to analysis setup" });
@@ -51,6 +59,20 @@ describe("MeasuresScreen schema errors", () => {
 
     fireEvent.click(continueButton);
     expect(onContinue).not.toHaveBeenCalled();
+  });
+
+  it("uses singular wording when one field is invalid", () => {
+    const subjects = createSeedSubjects().map((subject) => {
+      if (subject.usubjid !== "CAD7-001") return subject;
+      return { ...subject, baseline: { ...subject.baseline, weightKg: 9 } };
+    });
+    renderScreen(subjects);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "1 field is outside the expected unit range. Correct it before analysis.",
+    );
+    expect(screen.getByText("Fix 1 invalid field to continue.")).toBeVisible();
+    expect(screen.getByText(fieldRangeMessage("weightKg"))).toBeVisible();
   });
 
   it("clears the alert and enables Continue when the invalid fields are corrected", () => {
@@ -68,7 +90,8 @@ describe("MeasuresScreen schema errors", () => {
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByText(/Fix \d+ invalid/)).not.toBeInTheDocument();
-    expect(screen.queryByText("Out of range")).not.toBeInTheDocument();
+    expect(screen.getByText("Ready to continue to Analysis Setup")).toBeVisible();
+    expect(screen.queryByText(fieldRangeMessage("weightKg"))).not.toBeInTheDocument();
 
     const continueButton = screen.getByRole("button", { name: "Continue to analysis setup" });
     expect(continueButton).not.toHaveAttribute("aria-disabled");

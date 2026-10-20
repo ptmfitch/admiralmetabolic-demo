@@ -7,6 +7,8 @@ export function MeasureInput({
   digits,
   label,
   invalid,
+  message,
+  inputId,
   describedBy,
   onChange,
 }: {
@@ -14,6 +16,8 @@ export function MeasureInput({
   digits: number;
   label: string;
   invalid: boolean;
+  message?: string;
+  inputId?: string;
   describedBy?: string;
   onChange: (value: number) => void;
 }) {
@@ -34,6 +38,7 @@ export function MeasureInput({
   return (
     <div className="flex items-center gap-1.5">
       <input
+        id={inputId}
         aria-label={label}
         aria-invalid={invalid}
         aria-describedby={description}
@@ -55,11 +60,11 @@ export function MeasureInput({
           }
         }}
         className={cn(
-          "w-[4.5rem] rounded-md border bg-canvas px-2 py-1.5 text-xs font-medium text-ink",
-          invalid ? "border-band-high" : "border-line",
+          "w-[4.5rem] rounded-md bg-canvas px-2 py-1.5 text-xs font-medium text-ink",
+          invalid ? "border-2 border-band-high" : "border border-line",
         )}
       />
-      {invalid ? (
+      {invalid && message ? (
         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-band-high">
           <span
             aria-hidden="true"
@@ -67,7 +72,7 @@ export function MeasureInput({
           >
             !
           </span>
-          <span id={messageId}>Out of range</span>
+          <span id={messageId}>{message}</span>
         </span>
       ) : null}
     </div>

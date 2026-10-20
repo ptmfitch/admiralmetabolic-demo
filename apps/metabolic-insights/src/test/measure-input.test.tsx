@@ -43,6 +43,7 @@ describe("MeasureInput", () => {
           digits={1}
           label="Weight (kg)"
           invalid
+          message="Weight must be 40–250 kg"
           describedBy="schema-summary"
           onChange={() => {}}
         />
@@ -52,11 +53,12 @@ describe("MeasureInput", () => {
 
     const input = screen.getByRole("textbox", { name: "Weight (kg)" });
     expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input.className).toContain("border-2");
     expect(screen.getByText("!")).toBeVisible();
-    expect(screen.getByText("Out of range")).toBeVisible();
+    expect(screen.getByText("Weight must be 40–250 kg")).toBeVisible();
 
     const described = describedText(input);
-    expect(described).toMatch(/Out of range/);
+    expect(described).toMatch(/Weight must be 40–250 kg/);
     expect(described).toMatch(/1 field is outside the expected unit range/);
   });
 });

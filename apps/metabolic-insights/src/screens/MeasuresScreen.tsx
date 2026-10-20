@@ -8,9 +8,27 @@ import {
   type VisitName,
   EDITABLE_FIELDS,
   fieldInRange,
+  fieldRangeMessage,
 } from "../lib/metrics";
 
 const SCHEMA_ALERT_ID = "measures-schema-alert";
+
+function measureInputId(usubjid: string, visit: "baseline" | "week24", field: EditableField): string {
+  return `measure-${usubjid}-${visit}-${field}`;
+}
+
+function schemaAlertCopy(count: number): { summary: string; action: string } {
+  if (count === 1) {
+    return {
+      summary: "1 field is outside the expected unit range.",
+      action: "Correct it before analysis.",
+    };
+  }
+  return {
+    summary: `${count} fields are outside the expected unit range.`,
+    action: "Correct them before analysis.",
+  };
+}
 
 function invalidFieldCount(subjects: Subject[]): number {
   let count = 0;
@@ -88,6 +106,19 @@ export function MeasuresScreen({
     });
   }, [filter, subjects]);
 
+  const firstInvalidId = useMemo(() => {
+    for (const row of rows) {
+      for (const column of COLUMNS) {
+        if (!fieldInRange(column.field, row.subject[row.key][column.field])) {
+          return measureInputId(row.subject.usubjid, row.key, column.field);
+        }
+      }
+    }
+    return null;
+  }, [rows]);
+
+  const alertCopy = schemaAlertCopy(invalidCount);
+
   return (
     <Shell>
       <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-10 py-7">
@@ -126,11 +157,11 @@ export function MeasuresScreen({
                 Continue to analysis setup
               </button>
             </div>
-            {schemaOk ? null : (
-              <p className="text-right text-xs text-ink-soft">
-                Fix {invalidCount} invalid {invalidCount === 1 ? "field" : "fields"} to continue.
-              </p>
-            )}
+            <p className="text-right text-xs text-ink-soft">
+              {schemaOk
+                ? "Ready to continue to Analysis Setup"
+                : `Fix ${invalidCount} invalid ${invalidCount === 1 ? "field" : "fields"} to continue.`}
+            </p>
           </div>
         </div>
 
@@ -185,6 +216,8 @@ export function MeasuresScreen({
                             value={value}
                             digits={column.digits}
                             invalid={invalid}
+                            message={fieldRangeMessage(column.field)}
+                            inputId={measureInputId(row.subject.usubjid, row.key, column.field)}
                             describedBy={invalid ? SCHEMA_ALERT_ID : undefined}
                             label={`${row.subject.usubjid} ${row.visit} ${column.label}`}
                             onChange={(next) => onChange(row.subject.usubjid, row.key, column.field, next)}
@@ -201,8 +234,26 @@ export function MeasuresScreen({
 
         {!schemaOk ? (
           <p id={SCHEMA_ALERT_ID} className="text-xs text-band-high" role="alert">
-            {invalidCount} {invalidCount === 1 ? "field is" : "fields are"} outside the expected unit range.
-            Correct them before analysis.
+            {alertCopy.summary}{" "}
+            {firstInvalidId ? (
+              <a
+                href={`#${firstInvalidId}`}
+                className="underline"
+                onClick={(event) => {
+                  const input = document.getElementById(firstInvalidId);
+                  if (!input) return;
+                  event.preventDefault();
+                  input.focus();
+                  if (typeof input.scrollIntoView === "function") {
+                    input.scrollIntoView({ block: "nearest", inline: "nearest" });
+                  }
+                }}
+              >
+                {alertCopy.action}
+              </a>
+            ) : (
+              alertCopy.action
+            )}
           </p>
         ) : null}
         <p className="text-xs text-muted">
