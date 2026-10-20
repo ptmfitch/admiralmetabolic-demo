@@ -6,9 +6,41 @@ import {
   type EditableField,
   type Subject,
   type VisitName,
+  EDITABLE_FIELDS,
   fieldInRange,
-  subjectSchemaOk,
+  fieldRangeMessage,
 } from "../lib/metrics";
+
+const SCHEMA_ALERT_ID = "measures-schema-alert";
+
+function measureInputId(usubjid: string, visit: "baseline" | "week24", field: EditableField): string {
+  return `measure-${usubjid}-${visit}-${field}`;
+}
+
+function schemaAlertCopy(count: number): { summary: string; action: string } {
+  if (count === 1) {
+    return {
+      summary: "1 field is outside the expected unit range.",
+      action: "Correct it before analysis.",
+    };
+  }
+  return {
+    summary: `${count} fields are outside the expected unit range.`,
+    action: "Correct them before analysis.",
+  };
+}
+
+function invalidFieldCount(subjects: Subject[]): number {
+  let count = 0;
+  for (const subject of subjects) {
+    for (const visit of ["baseline", "week24"] as const) {
+      for (const field of EDITABLE_FIELDS) {
+        if (!fieldInRange(field, subject[visit][field])) count += 1;
+      }
+    }
+  }
+  return count;
+}
 
 type FilterId = "all" | "active" | "placebo" | "baseline" | "week24";
 
@@ -47,7 +79,8 @@ export function MeasuresScreen({
 }) {
   const [filter, setFilter] = useState<FilterId>("all");
   const [importNote, setImportNote] = useState<string | null>(null);
-  const schemaOk = subjects.every(subjectSchemaOk);
+  const invalidCount = useMemo(() => invalidFieldCount(subjects), [subjects]);
+  const schemaOk = invalidCount === 0;
 
   const rows = useMemo(() => {
     const ordered = [...subjects].sort((a, b) => {
@@ -73,38 +106,64 @@ export function MeasuresScreen({
     });
   }, [filter, subjects]);
 
+  const firstInvalidId = useMemo(() => {
+    for (const row of rows) {
+      for (const column of COLUMNS) {
+        if (!fieldInRange(column.field, row.subject[row.key][column.field])) {
+          return measureInputId(row.subject.usubjid, row.key, column.field);
+        }
+      }
+    }
+    return null;
+  }, [rows]);
+
+  const alertCopy = schemaAlertCopy(invalidCount);
+
   return (
     <Shell>
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-10 py-7">
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Subject measures</h1>
-            <p className="mt-1.5 text-[13px] text-ink-soft">
-              ADVS / ADLB baseline &amp; on-treatment records · editable before analysis
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-10 py-7 md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+        <div className="md:col-start-1 md:row-start-1">
+          <h1 className="text-2xl font-bold tracking-tight">Subject measures</h1>
+          <p className="mt-1.5 text-[13px] text-ink-soft">
+            ADVS / ADLB baseline &amp; on-treatment records · editable before analysis
+          </p>
+        </div>
+        <div className="order-last flex flex-col items-end gap-1.5 md:order-none md:col-start-2 md:row-start-1 md:justify-self-end">
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  onImport();
+                  setImportNote("Loaded / schema-checked subject measures (ADVS / ADLB)");
+                }}
+                className="rounded-[10px] border border-line bg-card px-4 py-2.5 text-[13px] font-medium text-ink"
+              >
+                Import ADaM
+              </button>
+              <button
+                type="button"
+                aria-disabled={schemaOk ? undefined : true}
+                aria-describedby={schemaOk ? undefined : SCHEMA_ALERT_ID}
+                onClick={() => {
+                  if (!schemaOk) return;
+                  onContinue();
+                }}
+                className={cn(
+                  "rounded-[10px] bg-brand px-4 py-2.5 text-[13px] font-semibold text-white",
+                  !schemaOk && "cursor-not-allowed opacity-50",
+                )}
+              >
+                Continue to analysis setup
+              </button>
+            </div>
+            <p className="text-right text-xs text-ink-soft">
+              {schemaOk
+                ? "Ready to continue to Analysis Setup"
+                : `Fix ${invalidCount} invalid ${invalidCount === 1 ? "field" : "fields"} to continue.`}
             </p>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => {
-                onImport();
-                setImportNote("Loaded / schema-checked subject measures (ADVS / ADLB)");
-              }}
-              className="rounded-[10px] border border-line bg-card px-4 py-2.5 text-[13px] font-medium text-ink"
-            >
-              Import ADaM
-            </button>
-            <button
-              type="button"
-              disabled={!schemaOk}
-              onClick={onContinue}
-              className="rounded-[10px] bg-brand px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50"
-            >
-              Continue to analysis setup
-            </button>
-          </div>
         </div>
 
+        <div className="flex flex-col gap-6 md:col-span-2 md:row-start-2">
         <div className="flex flex-wrap gap-2" role="group" aria-label="Subject filters">
           {FILTERS.map((item) => {
             const selected = filter === item.id;
@@ -126,8 +185,38 @@ export function MeasuresScreen({
         </div>
 
         {importNote ? <p className="text-xs font-medium text-brand">{importNote}</p> : null}
+        </div>
 
-        <div className="overflow-hidden rounded-2xl border border-line bg-card">
+        {!schemaOk ? (
+          <p
+            id={SCHEMA_ALERT_ID}
+            className="order-last text-xs text-band-high md:order-none md:col-span-2 md:row-start-3"
+            role="alert"
+          >
+            {alertCopy.summary}{" "}
+            {firstInvalidId ? (
+              <a
+                href={`#${firstInvalidId}`}
+                className="underline"
+                onClick={(event) => {
+                  const input = document.getElementById(firstInvalidId);
+                  if (!input) return;
+                  event.preventDefault();
+                  input.focus();
+                  if (typeof input.scrollIntoView === "function") {
+                    input.scrollIntoView({ block: "nearest", inline: "nearest" });
+                  }
+                }}
+              >
+                {alertCopy.action}
+              </a>
+            ) : (
+              alertCopy.action
+            )}
+          </p>
+        ) : null}
+
+        <div className={cn("overflow-hidden rounded-2xl border border-line bg-card md:col-span-2", schemaOk ? "md:row-start-3" : "md:row-start-4")}>
           <div className="max-h-[430px] overflow-auto">
             <table className="w-full border-collapse text-left">
               <thead className="sticky top-0 bg-card-muted">
@@ -156,6 +245,9 @@ export function MeasuresScreen({
                             value={value}
                             digits={column.digits}
                             invalid={invalid}
+                            message={fieldRangeMessage(column.field)}
+                            inputId={measureInputId(row.subject.usubjid, row.key, column.field)}
+                            describedBy={invalid ? SCHEMA_ALERT_ID : undefined}
                             label={`${row.subject.usubjid} ${row.visit} ${column.label}`}
                             onChange={(next) => onChange(row.subject.usubjid, row.key, column.field, next)}
                           />
@@ -169,12 +261,7 @@ export function MeasuresScreen({
           </div>
         </div>
 
-        {!schemaOk ? (
-          <p className="text-xs text-band-high" role="alert">
-            One or more measures are outside the expected unit range. Correct them before analysis.
-          </p>
-        ) : null}
-        <p className="text-xs text-muted">
+        <p className={cn("order-last text-xs text-muted md:order-none md:col-span-2", schemaOk ? "md:row-start-4" : "md:row-start-5")}>
           Editable for walkthrough only — changes are not audited / Part 11 controlled.
         </p>
       </div>

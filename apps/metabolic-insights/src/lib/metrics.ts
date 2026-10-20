@@ -152,17 +152,19 @@ export function percentWeightChangeAt(subject: Subject, week: AnalysisWeek): num
   return percentChange(subject.baseline.weightKg, followUp);
 }
 
-const FIELD_RANGES = {
-  weightKg: [40, 250],
-  heightCm: [140, 220],
-  waistCm: [50, 200],
-  glucoseMmolL: [2, 25],
-  insulinUuMl: [1, 150],
-  altUL: [1, 500],
-  astUL: [1, 500],
+const FIELD_RULES = {
+  weightKg: { min: 40, max: 250, label: "Weight", unit: "kg" },
+  heightCm: { min: 140, max: 220, label: "Height", unit: "cm" },
+  waistCm: { min: 50, max: 200, label: "Waist circumference", unit: "cm" },
+  glucoseMmolL: { min: 2, max: 25, label: "Glucose", unit: "mmol/L" },
+  insulinUuMl: { min: 1, max: 150, label: "Insulin", unit: "µU/mL" },
+  altUL: { min: 1, max: 500, label: "ALT", unit: "U/L" },
+  astUL: { min: 1, max: 500, label: "AST", unit: "U/L" },
 } as const;
 
-export type EditableField = keyof typeof FIELD_RANGES;
+export type EditableField = keyof typeof FIELD_RULES;
+
+export type FieldRule = { min: number; max: number; label: string; unit: string };
 
 export const EDITABLE_FIELDS: EditableField[] = [
   "weightKg",
@@ -174,9 +176,19 @@ export const EDITABLE_FIELDS: EditableField[] = [
   "astUL",
 ];
 
+export function fieldRule(field: EditableField): FieldRule {
+  const rule = FIELD_RULES[field];
+  return { min: rule.min, max: rule.max, label: rule.label, unit: rule.unit };
+}
+
+export function fieldRangeMessage(field: EditableField): string {
+  const rule = fieldRule(field);
+  return `${rule.label} must be ${rule.min}–${rule.max} ${rule.unit}`;
+}
+
 export function fieldInRange(field: EditableField, value: number): boolean {
-  const range = FIELD_RANGES[field];
-  return Number.isFinite(value) && value >= range[0] && value <= range[1];
+  const rule = FIELD_RULES[field];
+  return Number.isFinite(value) && value >= rule.min && value <= rule.max;
 }
 
 export function subjectSchemaOk(subject: Subject): boolean {
